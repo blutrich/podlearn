@@ -1,14 +1,19 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, BookOpen, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { LessonView } from "@/components/lessons/LessonView";
 
 interface TranscriptionControlsProps {
   isLoadingTranscription: boolean;
   isStartingTranscription: boolean;
   isGeneratingLesson: boolean;
+  isLoadingLesson: boolean;
   transcription: string;
+  lesson?: {
+    title: string;
+    content: string;
+  };
   progress: number;
   onStartTranscription: () => void;
   onViewTranscription: () => void;
@@ -20,7 +25,9 @@ export const TranscriptionControls = ({
   isLoadingTranscription,
   isStartingTranscription,
   isGeneratingLesson,
+  isLoadingLesson,
   transcription,
+  lesson,
   progress,
   onStartTranscription,
   onViewTranscription,
@@ -28,11 +35,18 @@ export const TranscriptionControls = ({
   onGenerateLesson,
 }: TranscriptionControlsProps) => {
   const [isTranscriptionVisible, setIsTranscriptionVisible] = useState(false);
+  const [isLessonVisible, setIsLessonVisible] = useState(false);
   const hasTranscription = Boolean(transcription);
 
   const handleViewTranscription = () => {
     setIsTranscriptionVisible(!isTranscriptionVisible);
+    setIsLessonVisible(false);
     onViewTranscription();
+  };
+
+  const handleViewLesson = () => {
+    setIsLessonVisible(!isLessonVisible);
+    setIsTranscriptionVisible(false);
   };
 
   return (
@@ -53,7 +67,7 @@ export const TranscriptionControls = ({
         {hasTranscription && (
           <>
             <Button 
-              variant="secondary" 
+              variant="default" 
               size="sm"
               onClick={handleViewTranscription}
               disabled={isLoadingTranscription}
@@ -70,15 +84,38 @@ export const TranscriptionControls = ({
                 Copy Transcription
               </Button>
             )}
-            <Button 
-              variant="secondary" 
-              size="sm"
-              onClick={onGenerateLesson}
-              disabled={isGeneratingLesson}
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              {isGeneratingLesson ? "Generating..." : "Generate Lesson"}
-            </Button>
+            {!lesson && !isLoadingLesson && (
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={onGenerateLesson}
+                disabled={isGeneratingLesson}
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                {isGeneratingLesson ? "Generating..." : "Generate Lesson"}
+              </Button>
+            )}
+            {lesson && !isLoadingLesson && (
+              <Button 
+                variant={isLessonVisible ? "secondary" : "default"}
+                size="sm"
+                className={`${isLessonVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-purple-500 hover:bg-purple-600 text-white"}`}
+                onClick={handleViewLesson}
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                {isLessonVisible ? "Hide Lesson" : "View Lesson"}
+              </Button>
+            )}
+            {isLoadingLesson && (
+              <Button 
+                variant="secondary"
+                size="sm"
+                disabled
+              >
+                <BookOpen className="w-4 h-4 mr-2 animate-pulse" />
+                Loading Lesson...
+              </Button>
+            )}
           </>
         )}
       </div>
@@ -86,6 +123,12 @@ export const TranscriptionControls = ({
       {isTranscriptionVisible && transcription && (
         <div className="mt-4 p-4 bg-muted rounded-lg overflow-x-auto max-h-[400px] overflow-y-auto">
           <pre className="whitespace-pre-wrap text-sm">{transcription}</pre>
+        </div>
+      )}
+
+      {isLessonVisible && lesson && (
+        <div className="mt-4">
+          <LessonView title={lesson.title} content={lesson.content} />
         </div>
       )}
       

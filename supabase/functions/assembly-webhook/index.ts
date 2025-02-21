@@ -1,12 +1,35 @@
+/// <reference path="../deno.d.ts" />
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.3'
+
+interface WebhookRequest {
+  status: string;
+  transcript_id: string;
+  utterances: Array<{
+    text: string;
+    speaker: string;
+    start: number;
+    end: number;
+    sentiment?: string;
+    sentiment_confidence?: number;
+    entities?: Array<{
+      entity_type: string;
+      text: string;
+      start: number;
+      end: number;
+    }>;
+  }>;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+const BATCH_SIZE = 50; // Process 50 segments at a time
+
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -41,32 +64,36 @@ serve(async (req) => {
       throw new Error(`Episode not found for transcript ID: ${webhookData.transcript_id}`)
     }
 
-    // Store the transcription segments
-    const segments = webhookData.utterances.map((utterance: any) => ({
-      episode_id: episode.id,
-      content: utterance.text,
-      speaker: utterance.speaker,
-      start_time: utterance.start,
-      end_time: utterance.end,
-      sentiment: utterance.sentiment,
-      sentiment_confidence: utterance.sentiment_confidence,
-      entities: utterance.entities || []
-    }))
+    // Process transcription segments in batches
+    const utterances = webhookData.utterances || [];
+    for (let i = 0; i < utterances.length; i += BATCH_SIZE) {
+      const batch = utterances.slice(i, i + BATCH_SIZE);
+      const segments = batch.map((utterance: any) => ({
+        episode_id: episode.id,
+        content: utterance.text,
+        speaker: utterance.speaker,
+        start_time: utterance.start,
+        end_time: utterance.end,
+        sentiment: utterance.sentiment,
+        sentiment_confidence: utterance.sentiment_confidence,
+        entities: utterance.entities || []
+      }));
 
-    // Insert all segments
-    const { error: insertError } = await supabase
-      .from('transcriptions')
-      .insert(segments)
+      const { error: insertError } = await supabase
+        .from('transcriptions')
+        .insert(segments)
 
-    if (insertError) {
-      throw new Error(`Failed to insert transcription segments: ${insertError.message}`)
+      if (insertError) {
+        throw new Error(`Failed to insert transcription batch ${i/BATCH_SIZE + 1}: ${insertError.message}`)
+      }
     }
 
-    // Update episode status with a direct update query
+    // Update episode status
     const { error: updateError } = await supabase
       .from('episodes')
       .update({ 
         transcription_status: 'completed',
+        transcription_completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', episode.id)

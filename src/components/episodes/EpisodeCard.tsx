@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,9 @@ export const EpisodeCard = ({
     isStartingTranscription,
     transcription,
     isLoadingTranscription,
+    isLoadingLesson,
     progress,
+    lesson,
     handleStartTranscription,
     handleGenerateLesson,
     handleViewTranscription,
@@ -80,7 +81,9 @@ export const EpisodeCard = ({
                 isLoadingTranscription={isLoadingTranscription}
                 isStartingTranscription={isStartingTranscription}
                 isGeneratingLesson={isGeneratingLesson}
+                isLoadingLesson={isLoadingLesson}
                 transcription={transcription}
+                lesson={lesson || undefined}
                 progress={progress}
                 onStartTranscription={handleStartTranscription}
                 onViewTranscription={handleViewTranscription}

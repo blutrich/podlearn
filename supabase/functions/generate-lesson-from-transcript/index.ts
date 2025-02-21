@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+/// <reference lib="deno.window" />
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -69,36 +71,62 @@ serve(async (req) => {
       .map(seg => `${seg.speaker}: ${seg.content}`)
       .join('\n\n')
 
-    const lessonPrompt = `You will be creating an educational lesson based on this podcast transcript:
+    // Limit transcript length to prevent memory issues
+    const maxLength = 12000; // About 3000 tokens
+    const truncatedTranscript = transcriptText.length > maxLength 
+      ? transcriptText.slice(0, maxLength) + "\n[Transcript truncated for length...]"
+      : transcriptText;
 
-${transcriptText}
+    const lessonPrompt = `You will be creating an educational lesson based on a podcast transcript. The lesson should follow a specific format and include certain elements. Here's how to proceed:
 
-Create an educational lesson following this exact format:
+First, carefully read through the following podcast transcript:
+
+<podcast_transcript>
+${truncatedTranscript}
+</podcast_transcript>
+
+Now, create an educational lesson based on this transcript. Follow these steps:
 
 1. Title:
-   - Create a concise, engaging title that summarizes the main topic (max 10 words).
+   - Create a concise, engaging title that summarizes the main topic of the podcast.
+   - Limit it to a single line with a maximum of 10 words.
 
 2. Summary:
-   - Write 2-3 sentences providing an overview of the main themes.
+   - Write 2-3 sentences that provide an overview of what the lesson covers.
+   - Focus on the main themes or ideas discussed in the podcast.
 
 3. Top 3 Takeaways:
-   - List the three most important points as clear, single sentences.
+   - Identify the three most important points from the podcast.
+   - Express each takeaway as a single, clear sentence.
 
 4. Core Concepts Explained:
-   For each of 3 key concepts:
-   - Name of concept
-   - 1-2 sentence explanation
-   - Relevant quote from transcript
-   - 2-3 bullet points on practical application
+   - Choose three key concepts discussed in the podcast.
+   - For each concept:
+     a) Provide a name for the concept.
+     b) Explain what it is in 1-2 sentences.
+     c) Include an exact quote from the transcript that relates to this concept.
+     d) List 2-3 bullet points on how to apply this concept.
 
 5. Practical Examples:
-   For each of 2 examples:
-   - One-sentence context
-   - Quote from transcript
-   - One-sentence lesson/insight
+   - Select two examples from the podcast that illustrate key points.
+   - For each example:
+     a) Provide a one-sentence context.
+     b) Include an exact quote from the transcript.
+     c) Explain the lesson or insight from this example in one sentence.
 
 6. Action Steps:
-   - Three clear, actionable instructions based on the content.`
+   - Create three actionable steps that listeners can take based on the podcast content.
+   - Express each step as a single, clear instruction.
+
+Important Format Rules:
+- Include all sections in the exact order shown in the task description.
+- Use word-for-word quotes from the transcript where required.
+- Keep all bullet points to single sentences.
+- Use consistent bullet point symbols throughout.
+- Maintain the exact spacing shown in the task description.
+- Include all section headers exactly as written.
+
+Output your completed lesson within <educational_lesson> tags.`
 
     console.log('Generating lesson with OpenAI')
 
@@ -109,18 +137,19 @@ Create an educational lesson following this exact format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-3.5-turbo-16k", // Using 16k context model instead of gpt-4
         messages: [
           {
             role: "system",
-            content: "You are an educational content creator skilled at creating structured, informative lesson summaries from podcast transcripts."
+            content: "You are an educational content creator skilled at creating structured, informative lesson summaries from podcast transcripts. Follow the format exactly as specified in the prompt, including all headers and structural elements."
           },
           {
             role: "user",
             content: lessonPrompt
           }
         ],
-        temperature: 0.7
+        temperature: 0.3, // Lower temperature for more consistent formatting
+        max_tokens: 2500 // Increased slightly to accommodate the detailed format
       })
     })
 
