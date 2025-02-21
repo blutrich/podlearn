@@ -27,4 +27,7 @@ export default defineConfig(({ mode }) => ({
     'ASSEMBLYAI_API_KEY',
     'OPENAI_API_KEY',
   ],
+  define: {
+    'import.meta.env.FUNCTIONS_URL': JSON.stringify('https://httiyebjgxxwtgggkpgw.supabase.co/functions/v1')
+  }
 }));

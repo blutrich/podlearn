@@ -69,7 +69,7 @@ export const useTranscriptionGenerate = ({
       const isDevelopment = import.meta.env.MODE === 'development';
       const baseUrl = isDevelopment 
         ? 'http://127.0.0.1:54321/functions/v1'
-        : import.meta.env.FUNCTIONS_URL;
+        : 'https://httiyebjgxxwtgggkpgw.supabase.co/functions/v1';
 
       console.log('Sending request to Edge Function:', {
         url: `${baseUrl}/generate-lesson-from-transcript`,
