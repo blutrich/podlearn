@@ -35,3 +35,4 @@ next-env.d.ts
 /supabase/.temp/
 .branches
 .temp
+supabase/functions/.env*

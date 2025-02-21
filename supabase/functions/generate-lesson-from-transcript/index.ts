@@ -15,69 +15,88 @@ serve(async (req) => {
   }
 
   try {
-    const { episodeId } = await req.json()
+    const { episodeId, title, transcription } = await req.json()
     
     if (!episodeId) {
       throw new Error('Episode ID is required')
     }
 
-    console.log('Generating lesson for episode:', episodeId)
+    console.log('Received request:', { episodeId, hasTitle: Boolean(title), transcriptionLength: transcription?.length });
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // Log environment variables (redacted)
+    const supabaseUrl = Deno.env.get('DB_URL');
+    const serviceRoleKey = Deno.env.get('DB_SERVICE_ROLE_KEY');
+    console.log('Environment check:', { 
+      hasSupabaseUrl: Boolean(supabaseUrl),
+      hasServiceRoleKey: Boolean(serviceRoleKey),
+      url: supabaseUrl // Log the URL to verify it's correct
+    });
 
-    // First get episode details to ensure it exists
-    const { data: episode, error: episodeError } = await supabaseClient
-      .from('episodes')
-      .select('id, original_id')
-      .eq('original_id', episodeId)
-      .maybeSingle()
-
-    if (episodeError) {
-      console.error('Error fetching episode:', episodeError)
-      throw new Error('Failed to fetch episode')
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('Missing database credentials. Please check environment variables.');
     }
 
-    if (!episode) {
-      throw new Error('Episode not found')
-    }
+    try {
+      const supabaseClient = createClient(
+        supabaseUrl,
+        serviceRoleKey,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          },
+          db: {
+            schema: 'public'
+          }
+        }
+      )
 
-    // Update episode status
-    await supabaseClient
-      .from('episodes')
-      .update({ lesson_generation_status: 'processing' })
-      .eq('id', episode.id)
+      // First get episode details to ensure it exists
+      console.log('Looking up episode with ID:', episodeId);
+      const { data: episode, error: episodeError } = await supabaseClient
+        .from('episodes')
+        .select('id, title')
+        .eq('id', episodeId)
+        .single()
 
-    // Get transcription segments
-    const { data: segments, error: transcriptionError } = await supabaseClient
-      .from('transcriptions')
-      .select('content, speaker')
-      .eq('episode_id', episode.id)
-      .order('start_time', { ascending: true })
+      console.log('Episode lookup result:', { 
+        hasEpisode: Boolean(episode), 
+        error: episodeError?.message || null,
+        errorCode: episodeError?.code || null,
+        details: episodeError?.details || null
+      });
 
-    if (transcriptionError) {
-      console.error('Error fetching transcriptions:', transcriptionError)
-      throw transcriptionError
-    }
+      if (episodeError) {
+        console.error('Error fetching episode:', {
+          message: episodeError.message,
+          code: episodeError.code,
+          details: episodeError.details
+        });
+        throw new Error(`Failed to fetch episode: ${episodeError.message}`);
+      }
 
-    if (!segments || segments.length === 0) {
-      throw new Error('No transcription found for this episode')
-    }
+      if (!episode) {
+        throw new Error('Episode not found');
+      }
 
-    // Combine all segments into one text
-    const transcriptText = segments
-      .map(seg => `${seg.speaker}: ${seg.content}`)
-      .join('\n\n')
+      // Use the provided transcription instead of fetching segments
+      if (!transcription) {
+        throw new Error('Transcription is required')
+      }
 
-    // Limit transcript length to prevent memory issues
-    const maxLength = 12000; // About 3000 tokens
-    const truncatedTranscript = transcriptText.length > maxLength 
-      ? transcriptText.slice(0, maxLength) + "\n[Transcript truncated for length...]"
-      : transcriptText;
+      // Update episode status
+      await supabaseClient
+        .from('episodes')
+        .update({ lesson_generation_status: 'processing' })
+        .eq('id', episode.id)
 
-    const lessonPrompt = `You will be creating an educational lesson based on a podcast transcript. The lesson should follow a specific format and include certain elements. Here's how to proceed:
+      // Limit transcript length to prevent memory issues
+      const maxLength = 12000; // About 3000 tokens
+      const truncatedTranscript = transcription.length > maxLength 
+        ? transcription.slice(0, maxLength) + "\n[Transcript truncated for length...]"
+        : transcription;
+
+      const lessonPrompt = `You will be creating an educational lesson based on a podcast transcript. The lesson should follow a specific format and include certain elements. Here's how to proceed:
 
 First, carefully read through the following podcast transcript:
 
@@ -128,79 +147,77 @@ Important Format Rules:
 
 Output your completed lesson within <educational_lesson> tags.`
 
-    console.log('Generating lesson with OpenAI')
+      console.log('Generating lesson with OpenAI')
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo-16k", // Using 16k context model instead of gpt-4
-        messages: [
-          {
-            role: "system",
-            content: "You are an educational content creator skilled at creating structured, informative lesson summaries from podcast transcripts. Follow the format exactly as specified in the prompt, including all headers and structural elements."
-          },
-          {
-            role: "user",
-            content: lessonPrompt
-          }
-        ],
-        temperature: 0.3, // Lower temperature for more consistent formatting
-        max_tokens: 2500 // Increased slightly to accommodate the detailed format
-      })
-    })
-
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.text()
-      console.error('OpenAI API error:', error)
-      throw new Error(`Failed to generate lesson: ${error}`)
-    }
-
-    const completion = await openaiResponse.json()
-    const lessonContent = completion.choices[0].message.content
-
-    // Delete existing lesson
-    await supabaseClient
-      .from('generated_lessons')
-      .delete()
-      .eq('episode_id', episode.id)
-
-    // Get episode details for the title
-    const { data: episodeDetails } = await supabaseClient
-      .from('episodes')
-      .select('title')
-      .eq('id', episode.id)
-      .single()
-
-    // Store the generated lesson
-    const { error: insertError } = await supabaseClient
-      .from('generated_lessons')
-      .insert({
-        episode_id: episode.id,
-        title: `Lesson for: ${episodeDetails?.title || 'Untitled Episode'}`,
-        content: lessonContent
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo-16k", // Using 16k context model instead of gpt-4
+          messages: [
+            {
+              role: "system",
+              content: "You are an educational content creator skilled at creating structured, informative lesson summaries from podcast transcripts. Follow the format exactly as specified in the prompt, including all headers and structural elements."
+            },
+            {
+              role: "user",
+              content: lessonPrompt
+            }
+          ],
+          temperature: 0.3, // Lower temperature for more consistent formatting
+          max_tokens: 2500 // Increased slightly to accommodate the detailed format
+        })
       })
 
-    if (insertError) {
-      console.error('Error inserting lesson:', insertError)
-      throw new Error('Failed to store generated lesson')
+      if (!openaiResponse.ok) {
+        const error = await openaiResponse.text()
+        console.error('OpenAI API error:', error)
+        throw new Error(`Failed to generate lesson: ${error}`)
+      }
+
+      const completion = await openaiResponse.json()
+      const lessonContent = completion.choices[0].message.content
+
+      // Delete existing lesson
+      await supabaseClient
+        .from('generated_lessons')
+        .delete()
+        .eq('episode_id', episode.id)
+
+      // Store the generated lesson
+      const { error: insertError } = await supabaseClient
+        .from('generated_lessons')
+        .insert({
+          episode_id: episode.id,
+          title: title || `Lesson for: ${episode.title || 'Untitled Episode'}`,
+          content: lessonContent
+        })
+
+      if (insertError) {
+        console.error('Error inserting lesson:', insertError)
+        throw new Error('Failed to store generated lesson')
+      }
+
+      // Update episode status
+      await supabaseClient
+        .from('episodes')
+        .update({ lesson_generation_status: 'completed' })
+        .eq('id', episode.id)
+
+      console.log('Lesson generated and stored successfully')
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Lesson generated successfully' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError);
+      throw new Error(`Database operation failed: ${dbError.message}`);
     }
-
-    // Update episode status
-    await supabaseClient
-      .from('episodes')
-      .update({ lesson_generation_status: 'completed' })
-      .eq('id', episode.id)
-
-    console.log('Lesson generated and stored successfully')
-
-    return new Response(
-      JSON.stringify({ success: true, message: 'Lesson generated successfully' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
 
   } catch (error) {
     console.error('Error in generate-lesson-from-transcript function:', error)
