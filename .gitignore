@@ -36,3 +36,11 @@ next-env.d.ts
 .branches
 .temp
 supabase/functions/.env*
+supabase/functions/*/node_modules
+supabase/functions/*/.env*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo

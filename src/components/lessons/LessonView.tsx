@@ -32,22 +32,35 @@ const parseLesson = (content: string): ParsedLesson => {
   // Remove the <educational_lesson> tags if present
   const cleanContent = content.replace(/<\/?educational_lesson>/g, '').trim();
   
-  // Split into sections
+  // Split into sections using numbered headers
   const sections = cleanContent.split(/\n\d+\.\s+/).filter(Boolean);
   
   const [titleSection, summarySection, takeawaysSection, conceptsSection, examplesSection, actionStepsSection] = sections;
 
   // Parse concepts
   const conceptsText = conceptsSection.replace('Core Concepts Explained:', '').trim();
-  const conceptBlocks = conceptsText.split(/(?=\w+:)/).filter(Boolean);
+  const conceptBlocks = conceptsText.split(/(?=\w[\w\s]*:)/).filter(Boolean);
   const concepts = conceptBlocks.map(block => {
-    const [name, ...rest] = block.split('\n').filter(Boolean);
-    const parts = rest.join('\n').split(/[a-d]\)/);
+    const [nameHeader, ...contentLines] = block.split('\n').filter(Boolean);
+    const name = nameHeader.replace(/:$/, '').trim();
+    const content = contentLines.join('\n');
+    
+    // Extract explanation (between name and quote)
+    const explanation = content.match(/^(.*?)(?="|\n\s*•)/s)?.[1]?.trim() || '';
+    
+    // Extract quote (between quotes)
+    const quote = content.match(/"([^"]+)"/)?.[1]?.trim() || '';
+    
+    // Extract applications (bullet points after quote)
+    const applications = content.match(/•[^•]+/g)?.map(point => 
+      point.replace(/^•\s*/, '').trim()
+    ) || [];
+
     return {
-      name: name.replace(':', '').trim(),
-      explanation: parts[1]?.trim() || '',
-      quote: parts[2]?.trim() || '',
-      applications: (parts[3]?.match(/•[^•]+/g) || []).map(point => point.replace('•', '').trim())
+      name,
+      explanation,
+      quote,
+      applications
     };
   });
 
@@ -55,11 +68,15 @@ const parseLesson = (content: string): ParsedLesson => {
   const examplesText = examplesSection.replace('Practical Examples:', '').trim();
   const exampleBlocks = examplesText.split(/(?=Example \d:)/).filter(Boolean);
   const examples = exampleBlocks.map(block => {
-    const parts = block.split(/[abc]\)/).filter(Boolean);
+    const lines = block.split('\n').filter(Boolean);
+    const context = lines[0].replace(/Example \d:/, '').trim();
+    const quote = lines.find(line => line.startsWith('"'))?.replace(/"/g, '').trim() || '';
+    const insight = lines[lines.length - 1].trim();
+
     return {
-      context: parts[0]?.replace(/Example \d:/, '').trim() || '',
-      quote: parts[1]?.trim() || '',
-      insight: parts[2]?.trim() || ''
+      context,
+      quote,
+      insight
     };
   });
 

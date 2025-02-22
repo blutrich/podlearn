@@ -33,7 +33,7 @@ serve(async (req) => {
     });
 
     if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('Missing database credentials. Please check environment variables.');
+      throw new Error('Missing database credentials. Please check environment variables: DB_URL and DB_SERVICE_ROLE_KEY');
     }
 
     try {
@@ -57,26 +57,31 @@ serve(async (req) => {
         .from('episodes')
         .select('id, title')
         .eq('id', episodeId)
-        .single()
+        .limit(1)
+        .maybeSingle()
 
       console.log('Episode lookup result:', { 
         hasEpisode: Boolean(episode), 
         error: episodeError?.message || null,
         errorCode: episodeError?.code || null,
-        details: episodeError?.details || null
+        details: episodeError?.details || null,
+        episodeData: episode, // Log the actual episode data
+        queriedId: episodeId,
+        supabaseUrl: supabaseUrl // Log the URL being used
       });
 
       if (episodeError) {
         console.error('Error fetching episode:', {
           message: episodeError.message,
           code: episodeError.code,
-          details: episodeError.details
+          details: episodeError.details,
+          queryId: episodeId
         });
         throw new Error(`Failed to fetch episode: ${episodeError.message}`);
       }
 
       if (!episode) {
-        throw new Error('Episode not found');
+        throw new Error(`Episode not found with ID: ${episodeId}`);
       }
 
       // Use the provided transcription instead of fetching segments

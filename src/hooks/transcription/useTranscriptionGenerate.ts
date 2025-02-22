@@ -29,16 +29,24 @@ export const useTranscriptionGenerate = ({
         .eq('original_id', episodeId)
         .single();
 
-      console.log('Episode query result:', { episode, error: episodeError });
+      console.log('Episode query result:', { 
+        episode, 
+        error: episodeError,
+        queriedId: episodeId 
+      });
 
       if (episodeError) {
-        console.error('Error fetching episode:', episodeError);
-        return;
+        console.error('Error fetching episode:', {
+          message: episodeError.message,
+          code: episodeError.code,
+          details: episodeError.details,
+          queriedId: episodeId
+        });
+        throw new Error(`Error fetching episode: ${episodeError.message}`);
       }
 
       if (!episode) {
-        console.error('Episode not found in database');
-        return;
+        throw new Error(`Episode not found with ID: ${episodeId}`);
       }
 
       // Get all transcription segments
@@ -48,16 +56,19 @@ export const useTranscriptionGenerate = ({
         .eq('episode_id', episode.id)
         .order('start_time', { ascending: true });
 
-      console.log('Transcription segments:', { count: segments?.length, error: transcriptionError });
+      console.log('Transcription segments:', { 
+        count: segments?.length, 
+        error: transcriptionError,
+        episodeId: episode.id 
+      });
 
       if (transcriptionError) {
         console.error('Error fetching transcriptions:', transcriptionError);
-        return;
+        throw new Error(`Error fetching transcriptions: ${transcriptionError.message}`);
       }
 
       if (!segments || segments.length === 0) {
-        console.error('No transcription segments found');
-        return;
+        throw new Error('No transcription segments found');
       }
 
       // Format transcription
@@ -75,7 +86,8 @@ export const useTranscriptionGenerate = ({
         url: `${baseUrl}/generate-lesson-from-transcript`,
         episodeId: episode.id,
         title: episode.title,
-        transcriptionLength: formattedTranscription.length
+        transcriptionLength: formattedTranscription.length,
+        isDevelopment
       });
 
       const { data: { session } } = await supabase.auth.getSession();

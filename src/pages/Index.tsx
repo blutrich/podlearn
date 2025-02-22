@@ -1,45 +1,53 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { BookOpen, Headphones, Sparkles, ArrowRight, Brain, Clock } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleAuth = () => {
+    console.log("Navigating to auth...", { currentPath: location.pathname });
+    navigate("/auth", { replace: true });
+  };
 
   return (
-    <div className="min-h-screen bg-secondary text-white">
+    <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-secondary/95 backdrop-blur-sm border-b border-white/10">
+      <nav className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg"></div>
-            <span className="text-xl font-semibold">Podcastly</span>
-          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-semibold">Pod Class</span>
+          </Link>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-white/70 hover:text-white transition-colors">
+            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+              How it Works
+            </a>
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
             </a>
-            <a href="#browse" className="text-white/70 hover:text-white transition-colors">
+            <Link to="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
               Browse
-            </a>
-            <a href="#pricing" className="text-white/70 hover:text-white transition-colors">
-              Pricing
-            </a>
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
-              className="hidden md:inline-flex hover:text-white hover:bg-white/10"
-              onClick={() => navigate("/auth")}
+              className="hidden md:inline-flex"
+              onClick={handleAuth}
             >
               Log in
             </Button>
             <Button 
               className="bg-primary hover:bg-primary/90"
-              onClick={() => navigate("/auth")}
+              onClick={handleAuth}
             >
-              Sign up
+              Get Started
             </Button>
           </div>
         </div>
@@ -56,7 +64,7 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                LEARN FROM PODCASTS
+                AI-POWERED LEARNING
               </motion.span>
               <motion.h1 
                 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
@@ -64,15 +72,15 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                Learn from your favorite podcasts
+                Turn Podcasts into <span className="text-gradient">Structured Lessons</span>
               </motion.h1>
               <motion.p 
-                className="text-lg text-white/70 max-w-xl"
+                className="text-lg text-muted-foreground max-w-xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                Transform podcast episodes into structured learning experiences with AI-powered transcription and lesson generation.
+                Transform your podcast listening into active learning. Our AI analyzes episodes, creates structured lessons, and helps you retain knowledge effectively.
               </motion.p>
               <motion.div 
                 className="flex flex-col sm:flex-row gap-4 pt-4"
@@ -82,82 +90,194 @@ const Index = () => {
               >
                 <Button 
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 text-white px-8"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
                   onClick={() => navigate("/browse")}
                 >
-                  Browse podcasts
+                  Start Learning
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
                 <Button 
                   size="lg"
                   variant="outline"
-                  className="border-white/20 hover:bg-white/10"
+                  className="border-border hover:bg-accent"
+                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView()}
                 >
-                  Learn more
+                  How it Works
                 </Button>
               </motion.div>
             </div>
-            <div className="relative">
+            <motion.div 
+              className="relative"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+            >
               <div className="absolute -top-20 -right-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl"></div>
-              <motion.div 
-                className="relative bg-card rounded-2xl overflow-hidden shadow-2xl border border-white/10"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <img 
-                  src="/placeholder.svg" 
-                  alt="App Preview" 
-                  className="w-full h-auto"
-                />
-              </motion.div>
-            </div>
+              <div className="relative bg-card rounded-2xl overflow-hidden shadow-2xl border border-border p-4">
+                <div className="aspect-[4/3] rounded-lg overflow-hidden bg-accent">
+                  <img 
+                    src="/app-preview.png" 
+                    alt="Pod Class Interface"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Featured Podcasts Section */}
-      <section className="py-20 px-4 bg-accent">
+      {/* How it Works Section */}
+      <section id="how-it-works" className="py-20 px-4 bg-accent">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Featured Podcasts</h2>
-            <p className="text-white/70 max-w-2xl mx-auto">
-              Discover our curated selection of educational podcasts
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">How Pod Class Works</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Three simple steps to transform your podcast listening into structured learning
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Headphones,
+                title: "Choose a Podcast",
+                description: "Select from our curated collection of educational podcasts or add your own favorites."
+              },
+              {
+                icon: Sparkles,
+                title: "AI Processing",
+                description: "Our AI transcribes the episode and generates a structured lesson with key takeaways."
+              },
+              {
+                icon: Brain,
+                title: "Learn & Retain",
+                description: "Study the organized content, take notes, and track your learning progress."
+              }
+            ].map((step, i) => (
               <motion.div 
                 key={i}
-                className="group bg-card rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300"
+                className="relative group"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 * i }}
               >
-                <div className="aspect-video bg-muted">
-                  <img 
-                    src="/placeholder.svg" 
-                    alt="Podcast thumbnail" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">Podcast Title</h3>
-                  <p className="text-white/70 mb-4">
-                    Brief description of the podcast and its content.
-                  </p>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-center border border-white/10 hover:bg-primary hover:text-white"
-                  >
-                    Learn more
-                  </Button>
+                <div className="bg-background rounded-xl p-6 h-full border border-border hover:border-primary/50 transition-all duration-300">
+                  <div className="mb-4 p-3 bg-primary/10 rounded-lg w-fit">
+                    <step.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
+                  <p className="text-muted-foreground">{step.description}</p>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Smart Learning Features</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Everything you need to learn effectively from podcasts
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                title: "AI Transcription",
+                description: "Accurate, speaker-separated transcripts for every episode"
+              },
+              {
+                title: "Smart Summaries",
+                description: "Key points and takeaways automatically extracted"
+              },
+              {
+                title: "Learning Paths",
+                description: "Curated episode sequences for structured learning"
+              },
+              {
+                title: "Progress Tracking",
+                description: "Monitor your learning journey across episodes"
+              },
+              {
+                title: "Note Taking",
+                description: "Add personal notes and highlights to lessons"
+              },
+              {
+                title: "Mobile Friendly",
+                description: "Learn on any device, anywhere, anytime"
+              }
+            ].map((feature, i) => (
+              <motion.div
+                key={i}
+                className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * i }}
+              >
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-accent">
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to Learn Smarter?</h2>
+          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Join Pod Class today and transform your podcast listening into an active learning experience.
+          </p>
+          <Button 
+            size="lg" 
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
+            onClick={handleAuth}
+          >
+            Get Started for Free
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-4 border-t border-border">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-semibold">Pod Class</span>
+            </Link>
+            <div className="flex flex-wrap justify-center gap-8">
+              <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+                How it Works
+              </a>
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                Features
+              </a>
+              <Link to="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
+                Browse
+              </Link>
+              <Button 
+                variant="link" 
+                className="text-muted-foreground hover:text-foreground p-0 h-auto"
+                onClick={handleAuth}
+              >
+                Sign Up
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Pod Class. All rights reserved.
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

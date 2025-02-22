@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -14,14 +13,18 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 export default function Auth() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
 
-  // If user is already logged in, redirect to home
+  // Get the redirect path from location state or default to /browse
+  const from = (location.state as any)?.from?.pathname || '/browse';
+
+  // If user is already logged in, redirect to the intended page
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={from} replace />;
   }
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -89,7 +92,8 @@ export default function Auth() {
         });
       }
     } else {
-      navigate('/');
+      // Redirect to the intended page after successful login
+      navigate(from, { replace: true });
     }
     setLoading(false);
   };
