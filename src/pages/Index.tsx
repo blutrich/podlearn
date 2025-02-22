@@ -115,11 +115,11 @@ const Index = () => {
               <div className="absolute -top-20 -right-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl"></div>
               <div className="relative bg-card rounded-2xl overflow-hidden shadow-2xl border border-border">
-                <div className="aspect-[16/9] rounded-lg overflow-hidden bg-gradient-to-b from-background to-accent">
+                <div className="aspect-[2/1] rounded-lg overflow-hidden bg-gradient-to-b from-background to-accent">
                   <img 
                     src="/app-preview.png" 
                     alt="Pod Class Interface"
-                    className="w-full h-full object-contain mix-blend-luminosity hover:mix-blend-normal transition-all duration-300"
+                    className="w-full h-full object-cover mix-blend-luminosity hover:mix-blend-normal transition-all duration-300"
                   />
                 </div>
               </div>
