@@ -96,63 +96,103 @@ serve(async (req) => {
         .eq('id', episode.id)
 
       // Limit transcript length to prevent memory issues
-      const maxLength = 12000; // About 3000 tokens
+      const maxLength = 24000; // Increased from 12000 to capture more content
       const truncatedTranscript = transcription.length > maxLength 
         ? transcription.slice(0, maxLength) + "\n[Transcript truncated for length...]"
         : transcription;
 
-      const lessonPrompt = `You will be creating an educational lesson based on a podcast transcript. The lesson should follow a specific format and include certain elements. Here's how to proceed:
+      const lessonPrompt = `You are tasked with creating a comprehensive educational lesson from a podcast transcript. Your primary goal is to ensure NO important ideas or concepts are lost from the original content. Follow these detailed instructions:
 
-First, carefully read through the following podcast transcript:
+First, carefully analyze this podcast transcript:
 
 <podcast_transcript>
 ${truncatedTranscript}
 </podcast_transcript>
 
-Now, create an educational lesson based on this transcript. Follow these steps:
+Create an educational lesson that captures ALL key ideas using this structure:
 
 1. Title:
-   - Create a concise, engaging title that summarizes the main topic of the podcast.
-   - Limit it to a single line with a maximum of 10 words.
+   - Create a descriptive title that encompasses the main topic and subtopics
+   - Maximum 15 words to allow for more detail
 
-2. Summary:
-   - Write 2-3 sentences that provide an overview of what the lesson covers.
-   - Focus on the main themes or ideas discussed in the podcast.
+2. Summary (Expanded):
+   - Write 3-4 sentences that provide a comprehensive overview
+   - Must touch on ALL major themes discussed
+   - Include any context or background information provided
 
-3. Top 3 Takeaways:
-   - Identify the three most important points from the podcast.
-   - Express each takeaway as a single, clear sentence.
+3. Key Ideas (Comprehensive List):
+   - List ALL important ideas mentioned in the podcast
+   - Each idea should be 1-2 sentences
+   - Include both major points and supporting concepts
+   - Number each idea for easy reference
 
-4. Core Concepts Explained:
-   - Choose three key concepts discussed in the podcast.
+4. Core Concepts Deep Dive:
+   - Number each concept (1., 2., etc.)
    - For each concept:
-     a) Provide a name for the concept.
-     b) Explain what it is in 1-2 sentences.
-     c) Include an exact quote from the transcript that relates to this concept.
-     d) List 2-3 bullet points on how to apply this concept.
+     a) Start with the concept name on its own line
+     b) Provide a clear explanation in 2-3 sentences
+     c) Include relevant quotes from the transcript (in quotation marks)
+     d) List applications with bullet points (•)
+     e) If applicable, list related concepts with bullet points (•)
+     f) If applicable, list common misconceptions with bullet points (•)
 
-5. Practical Examples:
-   - Select two examples from the podcast that illustrate key points.
+   Example format:
+   1. Concept Name
+      [Explanation in 2-3 sentences]
+      
+      "First relevant quote from transcript"
+      "Second relevant quote if available"
+      
+      Applications:
+      • First application point
+      • Second application point
+      
+      Related Concepts:
+      • Related concept 1
+      • Related concept 2
+      
+      Misconceptions:
+      • First misconception
+      • Second misconception
+
+5. Supporting Evidence:
+   - Include 3-4 specific examples from the transcript
    - For each example:
-     a) Provide a one-sentence context.
-     b) Include an exact quote from the transcript.
-     c) Explain the lesson or insight from this example in one sentence.
+     a) Full context explanation
+     b) Direct quote
+     c) Why this example is significant
+     d) How it connects to the larger concepts
 
-6. Action Steps:
-   - Create three actionable steps that listeners can take based on the podcast content.
-   - Express each step as a single, clear instruction.
+6. Expert Insights:
+   - List any specific expertise or authority referenced
+   - Include credentials or experience mentioned
+   - Capture specific recommendations or warnings
+   - Note any disagreements or alternative viewpoints presented
 
-Important Format Rules:
-- Include all sections in the exact order shown in the task description.
-- Use word-for-word quotes from the transcript where required.
-- Keep all bullet points to single sentences.
-- Use consistent bullet point symbols throughout.
-- Maintain the exact spacing shown in the task description.
-- Include all section headers exactly as written.
+7. Action Steps and Implementation:
+   - Create 5-7 actionable steps
+   - Include both immediate and long-term actions
+   - Add any prerequisites or dependencies
+   - Note any specific tools or resources mentioned
 
-Output your completed lesson within <educational_lesson> tags.`
+8. Additional Resources:
+   - List any books, articles, or resources mentioned
+   - Include any recommended tools or platforms
+   - Note any specific methodologies or frameworks referenced
 
-      console.log('Generating lesson with OpenAI')
+Important Guidelines:
+- Use exact quotes whenever possible
+- Maintain the speaker's original terminology
+- Include numerical data or statistics mentioned
+- Preserve any chronological or sequential information
+- Note any cause-and-effect relationships
+- Capture any debates or contrasting viewpoints
+- Include real-world examples and case studies
+- Preserve context and nuance
+
+Output your completed lesson within <educational_lesson> tags.`;
+
+      console.log('Generating comprehensive lesson with OpenAI')
 
       const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -161,19 +201,19 @@ Output your completed lesson within <educational_lesson> tags.`
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo-16k", // Using 16k context model instead of gpt-4
+          model: "gpt-3.5-turbo-16k", // Using 16k context model
           messages: [
             {
               role: "system",
-              content: "You are an educational content creator skilled at creating structured, informative lesson summaries from podcast transcripts. Follow the format exactly as specified in the prompt, including all headers and structural elements."
+              content: "You are an expert educational content creator skilled at creating comprehensive, structured lesson summaries. Your goal is to ensure no important information is lost from the source material. Follow the format exactly as specified in the prompt."
             },
             {
               role: "user",
               content: lessonPrompt
             }
           ],
-          temperature: 0.3, // Lower temperature for more consistent formatting
-          max_tokens: 2500 // Increased slightly to accommodate the detailed format
+          temperature: 0.2, // Reduced for more consistent and precise output
+          max_tokens: 4000 // Increased token limit for more comprehensive coverage
         })
       })
 

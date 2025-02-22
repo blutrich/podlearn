@@ -21,13 +21,10 @@ export default defineConfig(({ mode }) => ({
   },
   envPrefix: [
     'VITE_',
-    'SUPABASE_',
-    'FUNCTIONS_URL',
-    'API_URL',
-    'ASSEMBLYAI_API_KEY',
-    'OPENAI_API_KEY',
   ],
   define: {
-    'import.meta.env.FUNCTIONS_URL': JSON.stringify('https://httiyebjgxxwtgggkpgw.supabase.co/functions/v1')
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL || 'https://httiyebjgxxwtgggkpgw.supabase.co'),
+    'import.meta.env.VITE_FUNCTIONS_URL': JSON.stringify(process.env.VITE_FUNCTIONS_URL || 'https://httiyebjgxxwtgggkpgw.supabase.co/functions/v1'),
+    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0dGl5ZWJqZ3h4d3RnZ2drcGd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkwMjIyOTksImV4cCI6MjA1NDU5ODI5OX0.gS0k4orkiPl1OglKirBiLOqNC-f_flhJLB7iJ6KgxGg')
   }
 }));
