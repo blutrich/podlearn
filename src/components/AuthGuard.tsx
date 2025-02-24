@@ -1,5 +1,6 @@
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
+import { Header } from './Header';
 
 export function AuthGuard() {
   const { user, loading } = useAuth();
@@ -18,6 +19,13 @@ export function AuthGuard() {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // If authenticated, render child routes
-  return <Outlet />;
+  // If authenticated, render header and child routes
+  return (
+    <>
+      <Header />
+      <main className="pt-20">
+        <Outlet />
+      </main>
+    </>
+  );
 }

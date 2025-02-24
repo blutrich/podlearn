@@ -10,6 +10,9 @@ import Browse from "./pages/Browse";
 import Episodes from "./pages/Episodes";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import TestPayment from "./pages/TestPayment";
+import Pricing from "./pages/Pricing";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +33,9 @@ const App = () => (
               <Route path="/browse" element={<Browse />} />
               <Route path="/episodes/:podcastId" element={<Episodes />} />
               <Route path="/dashboard" element={<Navigate to="/browse" replace />} />
+              <Route path="/test-payment" element={<TestPayment />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
             </Route>
 
             {/* Catch all */}

@@ -81,6 +81,81 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credits: {
+        Row: {
+          id: string
+          user_id: string
+          credits: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          credits?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          credits?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          plan: string
+          status: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plan: string
+          status: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plan?: string
+          status?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_episode_usage: {
+        Row: {
+          id: string
+          user_id: string
+          episode_id: string
+          is_trial: boolean
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          episode_id: string
+          is_trial?: boolean
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          episode_id?: string
+          is_trial?: boolean
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       generated_lessons: {
         Row: {
           content: string

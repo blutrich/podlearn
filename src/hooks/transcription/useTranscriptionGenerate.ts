@@ -77,17 +77,13 @@ export const useTranscriptionGenerate = ({
         .join('\n\n');
 
       // Call the Supabase Edge Function
-      const isDevelopment = import.meta.env.MODE === 'development';
-      const baseUrl = isDevelopment 
-        ? 'http://127.0.0.1:54321/functions/v1'
-        : 'https://httiyebjgxxwtgggkpgw.supabase.co/functions/v1';
+      const baseUrl = 'https://httiyebjgxxwtgggkpgw.supabase.co/functions/v1';
 
       console.log('Sending request to Edge Function:', {
         url: `${baseUrl}/generate-lesson-from-transcript`,
         episodeId: episode.id,
         title: episode.title,
-        transcriptionLength: formattedTranscription.length,
-        isDevelopment
+        transcriptionLength: formattedTranscription.length
       });
 
       const { data: { session } } = await supabase.auth.getSession();

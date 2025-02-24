@@ -37,48 +37,29 @@ serve(async (req) => {
     }
 
     try {
-      const supabaseClient = createClient(
-        supabaseUrl,
-        serviceRoleKey,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          },
-          db: {
-            schema: 'public'
-          }
-        }
-      )
-
-      // First get episode details to ensure it exists
       console.log('Looking up episode with ID:', episodeId);
-      const { data: episode, error: episodeError } = await supabaseClient
-        .from('episodes')
-        .select('id, title')
-        .eq('id', episodeId)
-        .limit(1)
-        .maybeSingle()
+      
+      // Fetch episode using direct REST API call
+      const episodeResponse = await fetch(`${supabaseUrl}/rest/v1/episodes?id=eq.${episodeId}&select=id,title`, {
+        headers: {
+          'apikey': serviceRoleKey,
+          'Authorization': `Bearer ${serviceRoleKey}`
+        }
+      });
+
+      if (!episodeResponse.ok) {
+        throw new Error(`Failed to fetch episode: ${episodeResponse.statusText}`);
+      }
+
+      const episodes = await episodeResponse.json();
+      const episode = episodes[0];
 
       console.log('Episode lookup result:', { 
         hasEpisode: Boolean(episode), 
-        error: episodeError?.message || null,
-        errorCode: episodeError?.code || null,
-        details: episodeError?.details || null,
-        episodeData: episode, // Log the actual episode data
+        episodeData: episode,
         queriedId: episodeId,
-        supabaseUrl: supabaseUrl // Log the URL being used
+        supabaseUrl: supabaseUrl
       });
-
-      if (episodeError) {
-        console.error('Error fetching episode:', {
-          message: episodeError.message,
-          code: episodeError.code,
-          details: episodeError.details,
-          queryId: episodeId
-        });
-        throw new Error(`Failed to fetch episode: ${episodeError.message}`);
-      }
 
       if (!episode) {
         throw new Error(`Episode not found with ID: ${episodeId}`);
@@ -90,10 +71,20 @@ serve(async (req) => {
       }
 
       // Update episode status
-      await supabaseClient
-        .from('episodes')
-        .update({ lesson_generation_status: 'processing' })
-        .eq('id', episode.id)
+      const updateResponse = await fetch(`${supabaseUrl}/rest/v1/episodes?id=eq.${episode.id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': serviceRoleKey,
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ lesson_generation_status: 'processing' })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error(`Failed to update episode status: ${updateResponse.statusText}`);
+      }
 
       // Limit transcript length to prevent memory issues
       const maxLength = 24000; // Increased from 12000 to capture more content
@@ -227,30 +218,52 @@ Output your completed lesson within <educational_lesson> tags.`;
       const lessonContent = completion.choices[0].message.content
 
       // Delete existing lesson
-      await supabaseClient
-        .from('generated_lessons')
-        .delete()
-        .eq('episode_id', episode.id)
+      const deleteResponse = await fetch(`${supabaseUrl}/rest/v1/generated_lessons?episode_id=eq.${episode.id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': serviceRoleKey,
+          'Authorization': `Bearer ${serviceRoleKey}`
+        }
+      });
+
+      if (!deleteResponse.ok) {
+        throw new Error(`Failed to delete existing lesson: ${deleteResponse.statusText}`);
+      }
 
       // Store the generated lesson
-      const { error: insertError } = await supabaseClient
-        .from('generated_lessons')
-        .insert({
+      const storeResponse = await fetch(`${supabaseUrl}/rest/v1/generated_lessons`, {
+        method: 'POST',
+        headers: {
+          'apikey': serviceRoleKey,
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           episode_id: episode.id,
           title: title || `Lesson for: ${episode.title || 'Untitled Episode'}`,
           content: lessonContent
         })
+      });
 
-      if (insertError) {
-        console.error('Error inserting lesson:', insertError)
-        throw new Error('Failed to store generated lesson')
+      if (!storeResponse.ok) {
+        throw new Error(`Failed to store generated lesson: ${storeResponse.statusText}`);
       }
 
       // Update episode status
-      await supabaseClient
-        .from('episodes')
-        .update({ lesson_generation_status: 'completed' })
-        .eq('id', episode.id)
+      const updateStatusResponse = await fetch(`${supabaseUrl}/rest/v1/episodes?id=eq.${episode.id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': serviceRoleKey,
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ lesson_generation_status: 'completed' })
+      });
+
+      if (!updateStatusResponse.ok) {
+        throw new Error(`Failed to update episode status: ${updateStatusResponse.statusText}`);
+      }
 
       console.log('Lesson generated and stored successfully')
 

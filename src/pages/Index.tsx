@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Headphones, Sparkles, ArrowRight, Brain, Clock } from "lucide-react";
+import { BookOpen, Headphones, Sparkles, ArrowRight, Brain, Clock, Zap, Check, Coins, Infinity } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -30,6 +30,9 @@ const Index = () => {
             </a>
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
+            </a>
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              Pricing
             </a>
             <Link to="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
               Browse
@@ -226,6 +229,153 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-4 bg-accent/50">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Start with 2 free episodes. Then choose what works best for you.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Free Tier */}
+            <div className="relative bg-background border rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-5 h-5 text-primary" />
+                <span className="text-lg font-semibold">Free Trial</span>
+              </div>
+              <div className="text-3xl font-bold mb-2">$0</div>
+              <div className="text-sm text-muted-foreground mb-6">
+                Try before you buy
+              </div>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>2 free episode credits</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Full lesson generation</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Basic features</span>
+                </li>
+              </ul>
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={handleAuth}
+              >
+                Get Started
+              </Button>
+            </div>
+
+            {/* Pay As You Go */}
+            <div className="relative bg-background border-2 border-primary rounded-xl p-6 shadow-lg">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full">
+                  Most Popular
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mb-4">
+                <Coins className="w-5 h-5 text-primary" />
+                <span className="text-lg font-semibold">Pay As You Go</span>
+              </div>
+              <div className="text-3xl font-bold mb-2">$2.00</div>
+              <div className="text-sm text-muted-foreground mb-6">
+                per episode credit
+              </div>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Buy credits in packs</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Credits never expire</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Bulk discounts available</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>All premium features</span>
+                </li>
+              </ul>
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90" 
+                onClick={() => navigate("/pricing")}
+              >
+                Buy Credits
+              </Button>
+            </div>
+
+            {/* Unlimited */}
+            <div className="relative bg-background border rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Infinity className="w-5 h-5 text-primary" />
+                <span className="text-lg font-semibold">Unlimited</span>
+              </div>
+              <div className="text-3xl font-bold mb-2">$9</div>
+              <div className="text-sm text-muted-foreground mb-6">
+                per month
+              </div>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Unlimited episodes</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Priority support</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>All premium features</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>Cancel anytime</span>
+                </li>
+              </ul>
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => navigate("/pricing")}
+              >
+                Subscribe
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-muted-foreground mb-4">All plans include:</p>
+            <div className="flex flex-wrap justify-center gap-8 max-w-3xl mx-auto">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>AI-powered transcription</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>Smart lesson generation</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>Progress tracking</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>Note-taking tools</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 bg-accent">
         <div className="container mx-auto max-w-4xl text-center">
@@ -260,6 +410,9 @@ const Index = () => {
               </a>
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
+              </a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
               </a>
               <Link to="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
                 Browse

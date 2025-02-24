@@ -37,6 +37,9 @@ export const EpisodeCard = ({
     isLoadingLesson,
     progress,
     lesson,
+    remainingTrialEpisodes,
+    hasActiveSubscription,
+    credits,
     handleStartTranscription,
     handleGenerateLesson,
     handleViewTranscription,
@@ -55,27 +58,21 @@ export const EpisodeCard = ({
             />
           </div>
         )}
-        <div className="flex-grow space-y-3">
-          <div className="space-y-2">
-            <h3 className="font-semibold text-base sm:text-lg">{episode.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {stripHtml(episode.description || '')}
+
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold mb-1 truncate">{episode.title}</h3>
+          {episode.description && (
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+              {stripHtml(episode.description)}
             </p>
+          )}
+
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <Clock className="w-4 h-4" />
+            {formatDuration(duration)}
           </div>
 
-          <div className="flex flex-col space-y-3">
-            <div className="flex items-center text-sm text-muted-foreground gap-3">
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {formatDuration(episode.duration)}
-              </div>
-              {episode.published_at && (
-                <time>
-                  {new Date(episode.published_at).toLocaleDateString()}
-                </time>
-              )}
-            </div>
-
+          <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
               <TranscriptionControls
                 isLoadingTranscription={isLoadingTranscription}
@@ -85,10 +82,14 @@ export const EpisodeCard = ({
                 transcription={transcription}
                 lesson={lesson || undefined}
                 progress={progress}
+                remainingTrialEpisodes={remainingTrialEpisodes}
+                hasActiveSubscription={hasActiveSubscription}
+                credits={credits}
                 onStartTranscription={handleStartTranscription}
                 onViewTranscription={handleViewTranscription}
                 onCopyTranscription={handleCopyTranscription}
                 onGenerateLesson={handleGenerateLesson}
+                episodeTitle={episode.title}
               />
               <Button 
                 variant="secondary"
