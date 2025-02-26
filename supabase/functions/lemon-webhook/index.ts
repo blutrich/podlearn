@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createHmac } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
+/**
+ * IMPORTANT: This webhook needs to be deployed with the --no-verify-jwt flag to work with LemonSqueezy
+ * Run: supabase functions deploy lemon-webhook --no-verify-jwt
+ * 
+ * This allows LemonSqueezy to call this webhook without JWT authentication
+ * Instead, we use X-Signature verification for security
+ */
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -119,19 +127,35 @@ serve(async (req) => {
           
           console.log(`Updating credits: ${currentCredits} + ${credits} = ${newTotal}`);
           
-          const { error: creditsError } = await supabase
-            .from('user_credits')
-            .upsert({
-              user_id,
-              credits: newTotal,
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'user_id'
-            });
-
-          if (creditsError) {
-            console.error("Error updating credits:", creditsError);
-            throw new Error(`Failed to update user credits: ${creditsError.message}`);
+          // If the user record exists, update it
+          if (existingCredits) {
+            const { error: updateError } = await supabase
+              .from('user_credits')
+              .update({
+                credits: newTotal,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user_id);
+              
+            if (updateError) {
+              console.error("Error updating credits:", updateError);
+              throw new Error(`Failed to update user credits: ${updateError.message}`);
+            }
+          } else {
+            // Otherwise, insert a new record
+            const { error: insertError } = await supabase
+              .from('user_credits')
+              .insert({
+                user_id,
+                credits: newTotal,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+              
+            if (insertError) {
+              console.error("Error inserting credits:", insertError);
+              throw new Error(`Failed to insert user credits: ${insertError.message}`);
+            }
           }
           
           console.log(`Successfully updated credits for user ${user_id}`);
@@ -143,20 +167,49 @@ serve(async (req) => {
         if (plan) {
           console.log(`Setting subscription plan ${plan} for user ${user_id}`);
           
-          const { error: subscriptionError } = await supabase
+          // First check if user already has a subscription
+          const { data: existingSubscription, error: subFetchError } = await supabase
             .from('user_subscriptions')
-            .upsert({
-              user_id,
-              plan,
-              status: 'active',
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'user_id'
-            });
-
-          if (subscriptionError) {
-            console.error("Error updating subscription:", subscriptionError);
-            throw new Error(`Failed to update user subscription: ${subscriptionError.message}`);
+            .select('id')
+            .eq('user_id', user_id)
+            .single();
+            
+          if (subFetchError && subFetchError.code !== 'PGRST116') { // Not found is OK
+            console.error("Error fetching existing subscription:", subFetchError);
+            throw new Error(`Failed to fetch existing subscription: ${subFetchError.message}`);
+          }
+          
+          // If the user record exists, update it
+          if (existingSubscription) {
+            const { error: updateError } = await supabase
+              .from('user_subscriptions')
+              .update({
+                plan,
+                status: 'active',
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user_id);
+              
+            if (updateError) {
+              console.error("Error updating subscription:", updateError);
+              throw new Error(`Failed to update user subscription: ${updateError.message}`);
+            }
+          } else {
+            // Otherwise, insert a new record
+            const { error: insertError } = await supabase
+              .from('user_subscriptions')
+              .insert({
+                user_id,
+                plan,
+                status: 'active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+              
+            if (insertError) {
+              console.error("Error inserting subscription:", insertError);
+              throw new Error(`Failed to insert user subscription: ${insertError.message}`);
+            }
           }
           
           console.log(`Successfully updated subscription for user ${user_id}`);
