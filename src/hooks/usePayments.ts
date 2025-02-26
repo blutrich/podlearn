@@ -6,13 +6,14 @@ export function usePayments() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Force test mode for development environment
-  const IS_TEST_MODE = false; // Set to false for production
+  // Set to false for production (live) mode
+  const IS_TEST_MODE = false; // Changed to false for production
 
   // Store URLs
   const getStoreUrl = (productId: string) => {
     const baseUrl = `https://blutrich.lemonsqueezy.com/checkout/buy/${productId}`;
-    return IS_TEST_MODE ? `${baseUrl}?test_mode=1` : baseUrl;
+    // Always include test_mode for consistent URLs
+    return `${baseUrl}?test_mode=${IS_TEST_MODE ? '1' : '0'}`;
   };
 
   const PRODUCT_IDS = {
@@ -32,10 +33,8 @@ export function usePayments() {
       // Get base URL with test mode
       const url = new URL(getStoreUrl(PRODUCT_IDS.credits));
       
-      // Ensure test mode is set (redundant but ensures it's there)
-      if (IS_TEST_MODE) {
-        url.searchParams.set('test_mode', '1');
-      }
+      // Ensure test mode is set explicitly (important)
+      url.searchParams.set('test_mode', IS_TEST_MODE ? '1' : '0');
       
       // Add user and credit information
       url.searchParams.append('checkout[custom][user_id]', user.id);
@@ -64,10 +63,8 @@ export function usePayments() {
       // Get base URL with test mode
       const url = new URL(getStoreUrl(PRODUCT_IDS.subscription));
       
-      // Ensure test mode is set (redundant but ensures it's there)
-      if (IS_TEST_MODE) {
-        url.searchParams.set('test_mode', '1');
-      }
+      // Ensure test mode is set explicitly
+      url.searchParams.set('test_mode', IS_TEST_MODE ? '1' : '0');
       
       // Add user and plan information
       url.searchParams.append('checkout[custom][user_id]', user.id);
@@ -86,6 +83,7 @@ export function usePayments() {
 
   return {
     loading,
+    testMode: IS_TEST_MODE,
     purchaseCredits,
     startSubscription,
   };
