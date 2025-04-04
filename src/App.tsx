@@ -5,18 +5,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { AuthGuard } from "@/components/AuthGuard";
-import Index from "./pages/Index";
-import Browse from "./pages/Browse";
-import Episodes from "./pages/Episodes";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import TestPayment from "./pages/TestPayment";
-import Pricing from "./pages/Pricing";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import ReferralPage from "./pages/ReferralPage";
-import Dashboard from "./pages/Dashboard";
+import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
+
+// Lazy load all page components
+const Index = lazy(() => import("./pages/Index"));
+const Browse = lazy(() => import("./pages/Browse"));
+const Episodes = lazy(() => import("./pages/Episodes"));
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const TestPayment = lazy(() => import("./pages/TestPayment"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const ReferralPage = lazy(() => import("./pages/ReferralPage"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 const queryClient = new QueryClient();
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -25,25 +36,27 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<Index />} />
-            
-            {/* Protected routes */}
-            <Route element={<AuthGuard />}>
-              <Route path="/browse" element={<Browse />} />
-              <Route path="/episodes/:podcastId" element={<Episodes />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/test-payment" element={<TestPayment />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/payment-success" element={<PaymentSuccess />} />
-              <Route path="/referrals" element={<ReferralPage />} />
-            </Route>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/" element={<Index />} />
+              
+              {/* Protected routes */}
+              <Route element={<AuthGuard />}>
+                <Route path="/browse" element={<Browse />} />
+                <Route path="/episodes/:podcastId" element={<Episodes />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/test-payment" element={<TestPayment />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/referrals" element={<ReferralPage />} />
+              </Route>
 
-            {/* Catch all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* Catch all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
