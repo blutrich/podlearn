@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, LogOut } from "lucide-react";
+import { BookOpen, LogOut, Users, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,6 +33,14 @@ export function Header() {
         <div className="flex items-center gap-4">
           <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
             Pricing
+          </Link>
+          <Link to="/referrals" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Users className="w-4 h-4" />
+            Referrals
+          </Link>
+          <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
           </Link>
           {user && (
             <Button 

@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import TestPayment from "./pages/TestPayment";
 import Pricing from "./pages/Pricing";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import ReferralPage from "./pages/ReferralPage";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -32,10 +34,11 @@ const App = () => (
             <Route element={<AuthGuard />}>
               <Route path="/browse" element={<Browse />} />
               <Route path="/episodes/:podcastId" element={<Episodes />} />
-              <Route path="/dashboard" element={<Navigate to="/browse" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/test-payment" element={<TestPayment />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/referrals" element={<ReferralPage />} />
             </Route>
 
             {/* Catch all */}

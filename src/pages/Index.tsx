@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Headphones, Sparkles, ArrowRight, Brain, Clock, Zap, Check, Coins, Infinity } from "lucide-react";
+import { BookOpen, Headphones, Sparkles, ArrowRight, Brain, Clock, Zap, Check, Coins, Infinity, Users, Gift, Award } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -36,6 +36,9 @@ const Index = () => {
             </a>
             <Link to="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
               Browse
+            </Link>
+            <Link to="/referrals" className="text-muted-foreground hover:text-foreground transition-colors">
+              Referrals
             </Link>
           </div>
           <div className="flex items-center gap-4">
@@ -376,6 +379,76 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Referral Program Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Refer Friends, Earn Rewards</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Share PodClass with your friends and earn free credits when they join. The more you share, the more you earn!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-card rounded-lg p-6 border border-border flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Invite Friends</h3>
+              <p className="text-muted-foreground mb-4">
+                Share your unique referral link with friends who love podcasts and learning.
+              </p>
+              <Link to="/referrals" className="mt-auto">
+                <Button variant="outline" size="sm">
+                  Get Your Link
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="bg-card rounded-lg p-6 border border-border flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Gift className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Earn Credits</h3>
+              <p className="text-muted-foreground mb-4">
+                Receive 1 free credit for each friend who signs up using your referral link.
+              </p>
+              <div className="mt-auto">
+                <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full">
+                  1 Credit = 1 Episode
+                </span>
+              </div>
+            </div>
+            
+            <div className="bg-card rounded-lg p-6 border border-border flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Award className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Bonus Rewards</h3>
+              <p className="text-muted-foreground mb-4">
+                Refer 5 friends and get a special bonus reward. The more you share, the more you earn!
+              </p>
+              <Link to="/referrals" className="mt-auto">
+                <Button variant="outline" size="sm">
+                  Learn More
+                </Button>
+              </Link>
+            </div>
+          </div>
+          
+          <div className="mt-12 text-center">
+            <Button 
+              size="lg" 
+              onClick={handleAuth}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Start Referring Now
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 bg-accent">
         <div className="container mx-auto max-w-4xl text-center">
@@ -416,6 +489,9 @@ const Index = () => {
               </a>
               <Link to="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
                 Browse
+              </Link>
+              <Link to="/referrals" className="text-muted-foreground hover:text-foreground transition-colors">
+                Referrals
               </Link>
               <Button 
                 variant="link" 

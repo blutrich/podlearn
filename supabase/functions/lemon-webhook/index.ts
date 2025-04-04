@@ -15,6 +15,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Simple in-memory rate limiting
+// In production, consider using Redis or another persistent store
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute window
+const RATE_LIMIT_MAX = 60; // Max 60 requests per minute
+const ipRequests = new Map<string, { count: number, resetTime: number }>();
+
+function checkRateLimit(ip: string): { limited: boolean, remaining: number } {
+  const now = Date.now();
+  const record = ipRequests.get(ip);
+  
+  // If no record or window expired, create new record
+  if (!record || now > record.resetTime) {
+    ipRequests.set(ip, { 
+      count: 1, 
+      resetTime: now + RATE_LIMIT_WINDOW 
+    });
+    return { limited: false, remaining: RATE_LIMIT_MAX - 1 };
+  }
+  
+  // Increment count
+  record.count++;
+  
+  // Check if over limit
+  if (record.count > RATE_LIMIT_MAX) {
+    return { limited: true, remaining: 0 };
+  }
+  
+  return { limited: false, remaining: RATE_LIMIT_MAX - record.count };
+}
+
+// Clean up expired rate limit records periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of ipRequests.entries()) {
+    if (now > record.resetTime) {
+      ipRequests.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000); // Clean up every 5 minutes
+
 const verifySignature = async (payload: string, signature: string, secret: string) => {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -43,36 +83,90 @@ const hexToUint8Array = (hexString: string) => {
   );
 };
 
+// Add structured logging helper
+function logEvent(level: 'info' | 'warn' | 'error', message: string, data: Record<string, any> = {}) {
+  const logData = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...data
+  };
+  
+  // In production, you might send this to a logging service
+  console[level](JSON.stringify(logData));
+}
+
+// Track payment failures for monitoring
+let paymentFailures = {
+  count: 0,
+  lastFailure: null as null | string,
+  recentFailures: [] as Array<{time: string, reason: string, data: any}>
+};
+
+// Reset failure counts daily
+setInterval(() => {
+  const oldCount = paymentFailures.count;
+  if (oldCount > 0) {
+    logEvent('info', `Resetting payment failure count from ${oldCount} to 0`);
+  }
+  paymentFailures = {
+    count: 0,
+    lastFailure: null,
+    recentFailures: []
+  };
+}, 24 * 60 * 60 * 1000);
+
 serve(async (req) => {
-  console.log("LemonSqueezy webhook received a request");
+  logEvent('info', "LemonSqueezy webhook received a request");
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    // Get client IP for rate limiting
+    const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+    const { limited, remaining } = checkRateLimit(clientIp);
+    
+    // Apply rate limiting
+    if (limited) {
+      logEvent('warn', `Rate limit exceeded for IP: ${clientIp}`);
+      return new Response(
+        JSON.stringify({ error: 'Too many requests' }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': (Date.now() + RATE_LIMIT_WINDOW).toString()
+          } 
+        }
+      );
+    }
+    
     const signature = req.headers.get('X-Signature');
     if (!signature) {
-      console.error('Missing webhook signature');
+      logEvent('error', 'Missing webhook signature');
       throw new Error('Missing webhook signature');
     }
 
-    console.log("Received signature:", signature);
+    logEvent('info', "Received signature:", { signature });
 
     // Get the raw payload
     const payload = await req.text();
-    console.log("Received payload:", payload.substring(0, 200) + "..."); // Log first 200 chars for privacy
+    logEvent('info', "Received payload:", { payload: payload.substring(0, 200) + "..." }); // Log first 200 chars for privacy
     
     // Verify the signature
     const secret = Deno.env.get('LEMON_WEBHOOK_SECRET');
     if (!secret) {
-      console.error('Missing webhook secret');
+      logEvent('error', 'Missing webhook secret');
       throw new Error('Missing webhook secret');
     }
-    console.log("Using webhook secret:", secret === "podclass" ? "Correct (podclass)" : "Incorrect");
+    logEvent('info', "Using webhook secret:", { secret: secret === "podclass" ? "Correct (podclass)" : "Incorrect" });
 
     const isValid = await verifySignature(payload, signature, secret);
-    console.log("Signature verification result:", isValid ? "Valid" : "Invalid");
+    logEvent('info', "Signature verification result:", { isValid });
     
     if (!isValid) {
       throw new Error('Invalid webhook signature');
@@ -83,17 +177,21 @@ serve(async (req) => {
     
     // Check if this is a test mode event
     const isTestMode = data.meta.test_mode === true;
-    console.log(`Processing ${isTestMode ? 'TEST' : 'PRODUCTION'} webhook event`);
+    logEvent('info', `Processing ${isTestMode ? 'TEST' : 'PRODUCTION'} webhook event`, {
+      eventName: data.meta.event_name,
+      testMode: isTestMode
+    });
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('DB_URL');
     const supabaseKey = Deno.env.get('DB_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseKey) {
+      logEvent('error', 'Missing database credentials');
       throw new Error('Missing database credentials');
     }
 
-    console.log("Connecting to Supabase:", supabaseUrl);
+    logEvent('info', "Connecting to Supabase:", { supabaseUrl });
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Handle different webhook events
@@ -101,13 +199,53 @@ serve(async (req) => {
     const customData = data.meta.custom_data || {};
     const { user_id, credits, plan } = customData;
     
-    console.log(`Processing event ${eventName} for user ${user_id}`);
-    console.log("Custom data:", JSON.stringify(customData));
+    logEvent('info', `Processing event ${eventName}`, {
+      userId: user_id,
+      customData,
+      testMode: isTestMode
+    });
+
+    // Monitor payment failures
+    if (eventName === 'order_failed' || eventName === 'subscription_payment_failed') {
+      paymentFailures.count++;
+      paymentFailures.lastFailure = new Date().toISOString();
+      
+      // Keep only the 10 most recent failures
+      if (paymentFailures.recentFailures.length >= 10) {
+        paymentFailures.recentFailures.shift();
+      }
+      
+      paymentFailures.recentFailures.push({
+        time: new Date().toISOString(),
+        reason: data.data?.attributes?.failure_reason || 'Unknown',
+        data: {
+          eventName,
+          userId: user_id,
+          testMode: isTestMode
+        }
+      });
+      
+      logEvent('warn', `Payment failure detected: ${eventName}`, {
+        userId: user_id,
+        reason: data.data?.attributes?.failure_reason || 'Unknown',
+        failureCount: paymentFailures.count,
+        testMode: isTestMode
+      });
+      
+      // Alert if too many failures (in production you might send this to an alerting system)
+      if (paymentFailures.count >= 5 && !isTestMode) {
+        logEvent('error', 'ALERT: High payment failure rate detected', {
+          count: paymentFailures.count,
+          timespan: '24 hours',
+          recentFailures: paymentFailures.recentFailures
+        });
+      }
+    }
 
     switch (eventName) {
       case 'order_created':
         if (credits) {
-          console.log(`Adding ${credits} credits to user ${user_id}`);
+          logEvent('info', `Adding ${credits} credits to user ${user_id}`);
           
           // First check if the user already has credits
           const { data: existingCredits, error: fetchError } = await supabase
@@ -117,7 +255,7 @@ serve(async (req) => {
             .single();
             
           if (fetchError && fetchError.code !== 'PGRST116') { // Not found is OK
-            console.error("Error fetching existing credits:", fetchError);
+            logEvent('error', "Error fetching existing credits:", { error: fetchError });
             throw new Error(`Failed to fetch existing credits: ${fetchError.message}`);
           }
           
@@ -125,7 +263,7 @@ serve(async (req) => {
           const currentCredits = existingCredits?.credits || 0;
           const newTotal = currentCredits + Number(credits);
           
-          console.log(`Updating credits: ${currentCredits} + ${credits} = ${newTotal}`);
+          logEvent('info', `Updating credits: ${currentCredits} + ${credits} = ${newTotal}`);
           
           // If the user record exists, update it
           if (existingCredits) {
@@ -138,7 +276,7 @@ serve(async (req) => {
               .eq('user_id', user_id);
               
             if (updateError) {
-              console.error("Error updating credits:", updateError);
+              logEvent('error', "Error updating credits:", { error: updateError });
               throw new Error(`Failed to update user credits: ${updateError.message}`);
             }
           } else {
@@ -153,12 +291,12 @@ serve(async (req) => {
               });
               
             if (insertError) {
-              console.error("Error inserting credits:", insertError);
+              logEvent('error', "Error inserting credits:", { error: insertError });
               throw new Error(`Failed to insert user credits: ${insertError.message}`);
             }
           }
           
-          console.log(`Successfully updated credits for user ${user_id}`);
+          logEvent('info', `Successfully updated credits for user ${user_id}`);
         }
         break;
 
@@ -241,13 +379,21 @@ serve(async (req) => {
         console.log(`Received unhandled event type: ${eventName}`);
     }
 
+    // Add rate limit headers to successful response
     return new Response(
       JSON.stringify({ 
         message: 'Webhook processed successfully',
         isTestMode,
         eventName
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': remaining.toString(),
+          'X-RateLimit-Limit': RATE_LIMIT_MAX.toString()
+        } 
+      }
     );
 
   } catch (error) {

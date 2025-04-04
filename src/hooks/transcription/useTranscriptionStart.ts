@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { startTranscription } from "@/api/transcription";
@@ -43,12 +42,24 @@ export const useTranscriptionStart = ({
     let pollInterval: NodeJS.Timeout | null = null;
 
     try {
+      // Log the start of transcription with context
+      console.log(`Starting transcription for episode ${episodeId}`, {
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      });
+      
       setIsStartingTranscription(true);
       setProgress(10);
       
       const result = await startTranscription(episodeId);
       
       if (result.error || !result.data) {
+        console.error('Transcription start failed:', {
+          error: result.error,
+          episodeId,
+          userId: user.id,
+          timestamp: new Date().toISOString()
+        });
         throw new Error(result.error || "Failed to start transcription");
       }
 
@@ -61,70 +72,115 @@ export const useTranscriptionStart = ({
       let transcriptionComplete = false;
       let lastStatus = '';
       let startTime = Date.now();
-
-      // Start polling for transcription status
-      pollInterval = setInterval(async () => {
-        if (!isMounted) {
-          if (pollInterval) clearInterval(pollInterval);
-          return;
-        }
-
-        await checkStatus(
-          isMounted,
-          lastStatus,
-          transcriptionComplete,
-          async (status, isComplete) => {
-            lastStatus = status;
-            if (isComplete) {
-              transcriptionComplete = true;
+      
+      // Set up polling with exponential backoff
+      let pollDelay = 2000; // Start with 2 seconds
+      const maxPollDelay = 30000; // Max 30 seconds
+      
+      const pollStatus = async () => {
+        try {
+          await checkStatus(
+            isMounted,
+            lastStatus,
+            transcriptionComplete,
+            (status, isComplete) => {
+              if (!isMounted) return;
               
-              const hasTranscription = await loadTranscription(episodeId);
-              if (hasTranscription) {
+              lastStatus = status;
+              if (isComplete && !transcriptionComplete) {
+                transcriptionComplete = true;
+                
+                // Log successful completion
+                console.log(`Transcription completed for episode ${episodeId}`, {
+                  userId: user.id,
+                  duration: Math.round((Date.now() - startTime) / 1000),
+                  timestamp: new Date().toISOString()
+                });
+                
+                if (pollInterval) {
+                  clearInterval(pollInterval);
+                  pollInterval = null;
+                }
+                
+                loadTranscription(episodeId);
+                setProgress(100);
+                setIsStartingTranscription(false);
+                
                 toast({
                   title: "Transcription Complete",
-                  description: "You can now generate a lesson or view the transcription.",
+                  description: "You can now generate a lesson from this transcription.",
                 });
-                setIsStartingTranscription(false);
-                setProgress(100);
+              }
+            },
+            startTime,
+            (error) => {
+              if (!isMounted) return;
+              
+              console.error('Error polling transcription status:', {
+                error: error.message,
+                episodeId,
+                userId: user.id,
+                timestamp: new Date().toISOString()
+              });
+              
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
               }
               
-              if (pollInterval) clearInterval(pollInterval);
+              setIsStartingTranscription(false);
+              setProgress(0);
+              
+              toast({
+                title: "Transcription Error",
+                description: error.message || "An error occurred during transcription.",
+                variant: "destructive",
+              });
             }
-          },
-          startTime,
-          (error) => {
-            if (pollInterval) clearInterval(pollInterval);
-            setProgress(0);
-            setIsStartingTranscription(false);
-            toast({
-              title: "Error",
-              description: error.message,
-              variant: "destructive",
-            });
+          );
+          
+          // Implement exponential backoff for polling
+          if (!transcriptionComplete) {
+            pollDelay = Math.min(pollDelay * 1.5, maxPollDelay);
           }
-        );
-      }, 5000);
-
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      };
+      
+      // Initial poll
+      await pollStatus();
+      
+      // Set up interval with exponential backoff
+      pollInterval = setInterval(pollStatus, pollDelay);
+      
       return () => {
         isMounted = false;
-        if (pollInterval) clearInterval(pollInterval);
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
       };
     } catch (error) {
-      console.error('Error in transcription process:', error);
-      if (isMounted) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to start transcription. Please try again later.",
-          variant: "destructive",
-        });
-        setIsStartingTranscription(false);
-        setProgress(0);
-      }
+      if (!isMounted) return;
+      
+      console.error('Transcription start error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        episodeId,
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      });
+      
+      setIsStartingTranscription(false);
+      setProgress(0);
+      
+      toast({
+        title: "Transcription Error",
+        description: error instanceof Error ? error.message : "Failed to start transcription",
+        variant: "destructive",
+      });
     }
-  }, [episodeId, loadTranscription, toast, user, setProgress, checkStatus]);
+  }, [episodeId, user, setProgress, checkStatus, loadTranscription, toast]);
 
-  return {
-    isStartingTranscription,
-    handleStartTranscription
-  };
+  return { isStartingTranscription, handleStartTranscription };
 };

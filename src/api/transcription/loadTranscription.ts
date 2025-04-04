@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { TranscriptionSegment } from "@/types/transcription";
 
@@ -59,14 +58,21 @@ export const loadTranscriptionSegments = async (episodeId: string) => {
       return [];
     }
 
+    // Log details about the segments to help with debugging
+    console.log(`Found ${segments.length} segments for episode ${episodeId}`);
+    if (segments.length === 1) {
+      const segment = segments[0];
+      console.log(`Single segment details - Length: ${segment.content.length} chars, Time: ${segment.start_time}-${segment.end_time}`);
+    }
+
     // Convert the segments to the correct type
     const typedSegments: TranscriptionSegment[] = segments.map(segment => ({
-      content: segment.content,
-      speaker: segment.speaker,
-      start_time: segment.start_time,
-      end_time: segment.end_time,
-      sentiment: segment.sentiment,
-      sentiment_confidence: segment.sentiment_confidence,
+      content: segment.content || '',
+      speaker: segment.speaker || 'Speaker A', // Default to 'Speaker A' if null
+      start_time: segment.start_time || 0,
+      end_time: segment.end_time || 0,
+      sentiment: segment.sentiment || undefined,
+      sentiment_confidence: segment.sentiment_confidence || undefined,
       entities: Array.isArray(segment.entities) 
         ? segment.entities.map((entity: any) => ({
             entity_type: entity.entity_type,

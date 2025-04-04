@@ -114,10 +114,29 @@ export const useTranscription = (episodeId: string) => {
     loadTranscription
   });
 
-  // Initial load of lesson
+  // Initial load of lesson and transcription
   useEffect(() => {
-    loadLesson();
-  }, [episodeId]);
+    const loadInitialData = async () => {
+      try {
+        // Check if episode has completed transcription
+        const { data: episode } = await supabase
+          .from('episodes')
+          .select('transcription_status')
+          .eq('original_id', episodeId)
+          .single();
+
+        if (episode?.transcription_status === 'completed') {
+          await loadTranscription(episodeId);
+        }
+        
+        await loadLesson();
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      }
+    };
+
+    loadInitialData();
+  }, [episodeId, loadTranscription]);
 
   // Status check effect
   useEffect(() => {

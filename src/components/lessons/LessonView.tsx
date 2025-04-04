@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface LessonViewProps {
   title: string;
-  content: string;
+  content?: string;
 }
 
 interface ParsedLesson {
@@ -46,6 +46,27 @@ interface ParsedLesson {
 }
 
 const parseLesson = (content: string): ParsedLesson => {
+  if (!content) {
+    return {
+      title: "No Content Available",
+      summary: "The lesson content is not available yet.",
+      keyIdeas: [],
+      concepts: [],
+      supportingEvidence: [],
+      expertInsights: {
+        expertise: [],
+        recommendations: [],
+        alternativeViews: []
+      },
+      actionSteps: [],
+      additionalResources: {
+        references: [],
+        tools: [],
+        frameworks: []
+      }
+    };
+  }
+
   // Remove the <educational_lesson> tags if present
   const cleanContent = content.replace(/<\/?educational_lesson>/g, '').trim();
   
@@ -200,7 +221,7 @@ const parseLesson = (content: string): ParsedLesson => {
   };
 };
 
-export const LessonView = ({ title, content }: LessonViewProps) => {
+export const LessonView = ({ title, content = '' }: LessonViewProps) => {
   const [expandedSection, setExpandedSection] = React.useState<string | null>("summary");
   const lesson = React.useMemo(() => parseLesson(content), [content]);
 

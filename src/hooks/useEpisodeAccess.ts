@@ -78,7 +78,11 @@ export function useEpisodeAccess() {
         .select('id')
         .eq('original_id', originalEpisodeId.toString());
 
-      if (episodeError) throw episodeError;
+      if (episodeError) {
+        console.error('Database error when fetching episode:', episodeError);
+        toast.error('Unable to verify episode access. Please try again later.');
+        return false;
+      }
       
       if (!episodes || episodes.length === 0) {
         // Episode doesn't exist, create it
@@ -173,8 +177,24 @@ export function useEpisodeAccess() {
         return false;
       }
     } catch (error) {
-      console.error('Error checking episode access:', error);
-      toast.error('Failed to check episode access');
+      // Enhanced error logging with more context
+      console.error('Error checking episode access:', {
+        error,
+        userId: user.id,
+        episodeId: originalEpisodeId,
+        timestamp: new Date().toISOString()
+      });
+      
+      // More specific user-facing error message
+      if (error instanceof Error && error.message.includes('network')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else if (error instanceof Error && error.message.includes('permission')) {
+        toast.error('Permission error. You may not have access to this feature.');
+      } else {
+        toast.error('Unable to process this episode. Our team has been notified.');
+      }
+      
+      // Graceful fallback - deny access on error
       return false;
     } finally {
       setLoading(false);
@@ -184,29 +204,59 @@ export function useEpisodeAccess() {
   const recordEpisodeUsage = async (episodeId: string, isTrial: boolean) => {
     if (!user?.id) return;
     
-    const { error } = await supabase
-      .from('user_episode_usage')
-      .insert({
-        user_id: user.id,
-        episode_id: episodeId,
-        is_trial: isTrial
-      });
+    try {
+      const { error } = await supabase
+        .from('user_episode_usage')
+        .insert({
+          user_id: user.id,
+          episode_id: episodeId,
+          is_trial: isTrial
+        });
 
-    if (error) throw error;
+      if (error) {
+        console.error('Failed to record episode usage:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error recording episode usage:', {
+        error,
+        userId: user.id,
+        episodeId,
+        isTrial,
+        timestamp: new Date().toISOString()
+      });
+      // Don't show toast here as this is a background operation
+      // But we still log it for monitoring
+    }
   };
 
   const useCredit = async (episodeId: string) => {
     if (!user?.id) return;
     
-    const { error: creditError } = await supabase
-      .from('user_credits')
-      .update({ credits: credits - 1 })
-      .eq('user_id', user.id);
-
-    if (creditError) throw creditError;
-
-    await recordEpisodeUsage(episodeId, false);
-    setCredits(prev => prev - 1);
+    try {
+      // Use a transaction to ensure both operations succeed or fail together
+      const { error } = await supabase.rpc('use_credit_and_record_usage', {
+        p_user_id: user.id,
+        p_episode_id: episodeId
+      });
+      
+      if (error) {
+        console.error('Failed to use credit:', error);
+        throw error;
+      }
+      
+      // Update local state
+      setCredits(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error using credit:', {
+        error,
+        userId: user.id,
+        episodeId,
+        timestamp: new Date().toISOString()
+      });
+      toast.error('Failed to process credit. Please try again later.');
+      throw error;
+    }
   };
 
   return {

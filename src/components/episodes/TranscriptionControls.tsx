@@ -47,6 +47,7 @@ export const TranscriptionControls = ({
   const navigate = useNavigate();
   const [isTranscriptionVisible, setIsTranscriptionVisible] = useState(false);
   const [isLessonVisible, setIsLessonVisible] = useState(false);
+  const [shareCount, setShareCount] = useState(0);
   const hasTranscription = Boolean(transcription);
 
   const handleViewTranscription = () => {
@@ -60,55 +61,39 @@ export const TranscriptionControls = ({
     setIsTranscriptionVisible(false);
   };
 
-  // Extract key insights from lesson if available
   const getInsights = () => {
-    if (!lesson) {
-      console.log('No lesson available');
-      return undefined;
+    if (!lesson) return '';
+    
+    // Extract key points from the lesson content
+    const content = lesson.content;
+    const keyPointsMatch = content.match(/Key Points:([\s\S]*?)(?:\n\n|$)/);
+    const summaryMatch = content.match(/Summary:([\s\S]*?)(?:\n\n|$)/);
+    
+    if (keyPointsMatch && keyPointsMatch[1]) {
+      return keyPointsMatch[1].trim();
+    } else if (summaryMatch && summaryMatch[1]) {
+      return summaryMatch[1].trim();
+    } else {
+      // Fallback to first few sentences if no key points or summary found
+      const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      return sentences.slice(0, 3).join('. ') + '.';
     }
+  };
+
+  // Get a preview of the transcription for sharing
+  const getTranscriptionPreview = () => {
+    if (!transcription) return '';
     
-    console.log('Raw lesson content:', lesson.content); // Debug full content
-    
-    // Try to find any section that might contain key points
-    const sections = [
-      // Try Key Ideas (Comprehensive List) section
-      lesson.content.match(/Key Ideas \(Comprehensive List\):([\s\S]*?)(?=\d+\.\s+|Core Concepts|$)/),
-      // Try Key Ideas section
-      lesson.content.match(/Key Ideas:([\s\S]*?)(?=Core Concepts|$)/),
-      // Try Summary section
-      lesson.content.match(/Summary \(Expanded\):([\s\S]*?)(?=Key Ideas|$)/),
-      // Try numbered points anywhere in the content
-      { groups: [null, lesson.content.match(/\d+\.\s+([^\n]+)/g)?.join('\n')] }
-    ];
-    
-    // Try each section until we find one with content
-    for (const match of sections) {
-      if (match && match[1]) {
-        const content = match[1].trim();
-        if (content) {
-          // Split into lines and clean up
-          const ideas = content
-            .split('\n')
-            .map(line => line.trim())
-            .map(line => line.replace(/^\d+\.\s*|^[•-]\s*/, '').trim()) // Remove numbers and bullets
-            .filter(line => 
-              line.length > 0 && 
-              !line.startsWith('Key Ideas') &&
-              !line.startsWith('Summary') &&
-              line.length > 10 // Ensure the line has meaningful content
-            )
-            .slice(0, 3);
-            
-          console.log('Extracted ideas from section:', ideas);
-          if (ideas.length > 0) {
-            return ideas.join('\n');
-          }
-        }
-      }
-    }
-    
-    console.log('No insights found in any section');
-    return undefined;
+    // Get first 200 characters of the transcription
+    const preview = transcription.substring(0, 200).trim();
+    return preview;
+  };
+
+  // Track when a share is completed
+  const handleShareComplete = () => {
+    setShareCount(prev => prev + 1);
+    // In a real implementation, you might want to track this in the database
+    // or give the user a reward after a certain number of shares
   };
 
   return (
@@ -206,6 +191,9 @@ export const TranscriptionControls = ({
                   episodeTitle={episodeTitle}
                   episodeUrl={window.location.href}
                   insights={getInsights()}
+                  transcriptionPreview={getTranscriptionPreview()}
+                  referralBonus={shareCount < 3} // Enable referral bonus for first 3 shares
+                  onShareComplete={handleShareComplete}
                 />
               </>
             )}
@@ -215,7 +203,7 @@ export const TranscriptionControls = ({
                 size="sm"
                 disabled
               >
-                <BookOpen className="w-4 h-4 mr-2 animate-pulse" />
+                <BookOpen className="w-4 h-4 mr-2" />
                 Loading Lesson...
               </Button>
             )}
@@ -224,8 +212,8 @@ export const TranscriptionControls = ({
       </div>
 
       {isTranscriptionVisible && transcription && (
-        <div className="mt-4 p-4 bg-muted rounded-lg overflow-x-auto max-h-[400px] overflow-y-auto">
-          <pre className="whitespace-pre-wrap text-sm">{transcription}</pre>
+        <div className="mt-4 p-4 bg-muted rounded-lg overflow-x-auto max-h-[600px] overflow-y-auto">
+          <pre className="whitespace-pre-wrap text-sm font-normal">{transcription}</pre>
         </div>
       )}
 
