@@ -44,3 +44,4 @@ supabase/functions/*/.env*
 .vscode
 *.swp
 *.swo
+supabase-mcp-server/
