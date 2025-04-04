@@ -1,13 +1,15 @@
 import React from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, BookOpen, ListChecks, Lightbulb, Quote, Target, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LessonViewProps {
-  title: string;
-  content?: string;
+  episode: string;
+  lessonId?: string;
+  showPodcast?: boolean;
+  readOnly?: boolean;
 }
 
 interface ParsedLesson {
@@ -221,9 +223,14 @@ const parseLesson = (content: string): ParsedLesson => {
   };
 };
 
-export const LessonView = ({ title, content = '' }: LessonViewProps) => {
+export default function LessonView({
+  episode,
+  lessonId,
+  showPodcast = true,
+  readOnly = false
+}: LessonViewProps) {
   const [expandedSection, setExpandedSection] = React.useState<string | null>("summary");
-  const lesson = React.useMemo(() => parseLesson(content), [content]);
+  const lesson = React.useMemo(() => parseLesson(episode), [episode]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -240,38 +247,37 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
   }) => (
     <Button
       variant="ghost"
-      className="w-full flex items-center justify-between p-4 hover:bg-accent/5"
+      className="w-full flex items-center justify-between px-4 py-3 hover:bg-accent/5"
       onClick={() => toggleSection(section)}
     >
       <div className="flex items-center gap-2">
-        <Icon className="w-5 h-5" />
-        <span className="font-semibold">{title}</span>
+        <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+        <span className="font-semibold text-sm sm:text-base">{title}</span>
       </div>
       {expandedSection === section ? (
-        <ChevronUp className="w-5 h-5" />
+        <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
       ) : (
-        <ChevronDown className="w-5 h-5" />
+        <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
       )}
     </Button>
   );
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <div className="p-4 border-b">
+    <Card className="mx-0 px-0">
+      <CardHeader className="px-2 sm:px-3 py-3">
         <h1 className="text-xl font-bold">{lesson.title}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{title}</p>
-      </div>
-
-      <ScrollArea className="h-[calc(100vh-12rem)]">
+        <p className="text-sm text-muted-foreground mt-1">{episode}</p>
+      </CardHeader>
+      <CardContent className="px-0">
         <div className="divide-y">
           {/* Summary Section */}
           <div>
             <SectionHeader title="Summary" section="summary" icon={BookOpen} />
             <div className={cn(
               "overflow-hidden transition-all",
-              expandedSection === "summary" ? "p-4" : "h-0"
+              expandedSection === "summary" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
-              <p className="text-sm leading-relaxed">{lesson.summary}</p>
+              <p className="text-sm sm:text-base leading-relaxed">{lesson.summary}</p>
             </div>
           </div>
 
@@ -280,13 +286,13 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
             <SectionHeader title="Key Ideas" section="keyIdeas" icon={ListChecks} />
             <div className={cn(
               "overflow-hidden transition-all",
-              expandedSection === "keyIdeas" ? "p-4" : "h-0"
+              expandedSection === "keyIdeas" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
               <ul className="space-y-3">
                 {lesson.keyIdeas.map((idea, index) => (
-                  <li key={index} className="flex gap-2 text-sm">
-                    <span className="font-mono text-primary">#{index + 1}</span>
-                    {idea}
+                  <li key={index} className="flex gap-2 text-sm sm:text-base">
+                    <span className="font-mono text-primary shrink-0">#{index + 1}</span>
+                    <span>{idea}</span>
                   </li>
                 ))}
               </ul>
@@ -298,19 +304,19 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
             <SectionHeader title="Core Concepts" section="concepts" icon={Lightbulb} />
             <div className={cn(
               "overflow-hidden transition-all",
-              expandedSection === "concepts" ? "p-4" : "h-0"
+              expandedSection === "concepts" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
               <div className="space-y-8">
                 {lesson.concepts.map((concept, index) => (
                   <div key={index} className="space-y-4">
-                    <h3 className="font-semibold text-lg">{concept.name}</h3>
-                    <p className="text-sm">{concept.explanation}</p>
+                    <h3 className="font-semibold text-lg break-words">{concept.name}</h3>
+                    <p className="text-sm break-words">{concept.explanation}</p>
                     
                     {concept.quotes.length > 0 && (
                       <div className="space-y-2">
                         <h4 className="text-sm font-medium">Key Quotes:</h4>
                         {concept.quotes.map((quote, i) => (
-                          <blockquote key={i} className="border-l-2 border-primary/50 pl-3 text-sm italic">
+                          <blockquote key={i} className="border-l-2 border-primary/50 pl-2 text-sm italic break-words">
                             "{quote}"
                           </blockquote>
                         ))}
@@ -369,13 +375,13 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
             <SectionHeader title="Supporting Evidence" section="evidence" icon={Quote} />
             <div className={cn(
               "overflow-hidden transition-all",
-              expandedSection === "evidence" ? "p-4" : "h-0"
+              expandedSection === "evidence" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
               <div className="space-y-6">
                 {lesson.supportingEvidence.map((evidence, index) => (
                   <div key={index} className="space-y-3">
                     <p className="text-sm font-medium">{evidence.context}</p>
-                    <blockquote className="border-l-2 border-primary/50 pl-3 text-sm italic">
+                    <blockquote className="border-l-2 border-primary/50 pl-2 text-sm italic">
                       "{evidence.quote}"
                     </blockquote>
                     <div className="space-y-2">
@@ -393,7 +399,7 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
             <SectionHeader title="Expert Insights" section="insights" icon={Brain} />
             <div className={cn(
               "overflow-hidden transition-all",
-              expandedSection === "insights" ? "p-4" : "h-0"
+              expandedSection === "insights" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
               {lesson.expertInsights.expertise.length > 0 && (
                 <div className="mb-4">
@@ -444,7 +450,7 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
             <SectionHeader title="Action Steps" section="actions" icon={Target} />
             <div className={cn(
               "overflow-hidden transition-all",
-              expandedSection === "actions" ? "p-4" : "h-0"
+              expandedSection === "actions" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
               <div className="space-y-6">
                 {lesson.actionSteps.map((step, index) => (
@@ -492,7 +498,7 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
             <SectionHeader title="Additional Resources" section="resources" icon={BookOpen} />
             <div className={cn(
               "overflow-hidden transition-all",
-              expandedSection === "resources" ? "p-4" : "h-0"
+              expandedSection === "resources" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
               {lesson.additionalResources.references.length > 0 && (
                 <div className="mb-4">
@@ -538,7 +544,7 @@ export const LessonView = ({ title, content = '' }: LessonViewProps) => {
             </div>
           </div>
         </div>
-      </ScrollArea>
+      </CardContent>
     </Card>
   );
-}; 
+} 

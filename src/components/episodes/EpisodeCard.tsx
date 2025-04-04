@@ -47,7 +47,7 @@ export const EpisodeCard = ({
   } = useTranscription(episode.id);
 
   return (
-    <Card className="group hover:bg-accent/5 transition-colors">
+    <Card className="group hover:bg-accent/5 transition-colors w-full">
       <div className="p-4 flex gap-4">
         {episode.image_url && (
           <div className="flex-shrink-0">
@@ -59,7 +59,7 @@ export const EpisodeCard = ({
           </div>
         )}
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 w-full">
           <h3 className="text-lg font-semibold mb-1 truncate">{episode.title}</h3>
           {episode.description && (
             <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
@@ -72,8 +72,8 @@ export const EpisodeCard = ({
             {formatDuration(duration)}
           </div>
 
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-4 w-full">
+            <div className="flex flex-wrap gap-2 w-full">
               <TranscriptionControls
                 isLoadingTranscription={isLoadingTranscription}
                 isStartingTranscription={isStartingTranscription}

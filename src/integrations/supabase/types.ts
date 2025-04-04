@@ -435,6 +435,151 @@ export type Database = {
           },
         ]
       }
+      user_referrals: {
+        Row: {
+          id: string;
+          referrer_id: string;
+          referred_id: string;
+          status: string;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          referrer_id: string;
+          referred_id: string;
+          status?: string;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          referrer_id?: string;
+          referred_id?: string;
+          status?: string;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_referrals_referrer_id_fkey";
+            columns: ["referrer_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_referrals_referred_id_fkey";
+            columns: ["referred_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      podcast_folders: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          description?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          description?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "podcast_folders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      podcast_folder_items: {
+        Row: {
+          id: string
+          folder_id: string
+          podcast_id: number
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          folder_id: string
+          podcast_id: number
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          folder_id?: string
+          podcast_id?: number
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "podcast_folder_items_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "podcast_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "podcast_folder_items_podcast_id_fkey"
+            columns: ["podcast_id"]
+            isOneToOne: false
+            referencedRelation: "podcasts"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      saved_podcasts: {
+        Row: {
+          id: string
+          user_id: string
+          podcast_id: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          podcast_id: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          podcast_id?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_podcasts_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_podcasts_podcast_id_fkey"
+            columns: ["podcast_id"]
+            referencedRelation: "podcasts"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

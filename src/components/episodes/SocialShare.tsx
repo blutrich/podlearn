@@ -268,7 +268,7 @@ export function SocialShare({
 
       {/* Share Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[95vw] w-full sm:max-w-md px-4 sm:px-6">
           <DialogHeader>
             <DialogTitle>Share "{episodeTitle.length > 30 ? episodeTitle.substring(0, 30) + '...' : episodeTitle}"</DialogTitle>
             <DialogDescription>
@@ -279,7 +279,7 @@ export function SocialShare({
           </DialogHeader>
           
           <Tabs defaultValue="insights" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-3">
+            <TabsList className="grid grid-cols-3 w-full">
               <TabsTrigger value="insights">Insights</TabsTrigger>
               {transcriptionPreview && <TabsTrigger value="transcription">Transcription</TabsTrigger>}
               <TabsTrigger value="customize">Customize</TabsTrigger>
@@ -289,7 +289,7 @@ export function SocialShare({
               <div className="text-sm">
                 <p className="font-medium mb-2">Key Takeaways:</p>
                 {insights ? (
-                  <div className="whitespace-pre-line">{formatInsights(insights)}</div>
+                  <div className="whitespace-pre-line break-words">{formatInsights(insights)}</div>
                 ) : (
                   <p className="text-muted-foreground italic">No insights available</p>
                 )}
@@ -300,7 +300,7 @@ export function SocialShare({
               <TabsContent value="transcription" className="max-h-60 overflow-y-auto">
                 <div className="text-sm">
                   <p className="font-medium mb-2">Transcription Preview:</p>
-                  <p className="text-muted-foreground">{transcriptionPreview}...</p>
+                  <p className="text-muted-foreground break-words">{transcriptionPreview}...</p>
                 </div>
               </TabsContent>
             )}
@@ -312,39 +312,39 @@ export function SocialShare({
                   placeholder="What did you think about this episode?" 
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="min-h-20"
+                  className="min-h-20 w-full text-sm"
                 />
               </div>
             </TabsContent>
           </Tabs>
           
-          <div className="flex flex-wrap gap-2 mt-4">
-            <Button size="sm" onClick={shareToLinkedIn} className="flex-1">
-              <Linkedin className="h-4 w-4 mr-2" />
-              LinkedIn
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <Button size="sm" onClick={shareToLinkedIn} className="w-full px-2">
+              <Linkedin className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">LinkedIn</span>
             </Button>
-            <Button size="sm" onClick={shareToTwitter} className="flex-1">
-              <Twitter className="h-4 w-4 mr-2" />
-              Twitter
+            <Button size="sm" onClick={shareToTwitter} className="w-full px-2">
+              <Twitter className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Twitter</span>
             </Button>
-            <Button size="sm" onClick={shareToWhatsApp} className="flex-1">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              WhatsApp
+            <Button size="sm" onClick={shareToWhatsApp} className="w-full px-2">
+              <MessageCircle className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">WhatsApp</span>
             </Button>
           </div>
           
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={shareToFacebook} className="flex-1">
-              <Facebook className="h-4 w-4 mr-2" />
-              Facebook
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            <Button size="sm" onClick={shareToFacebook} className="w-full px-2">
+              <Facebook className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Facebook</span>
             </Button>
-            <Button size="sm" onClick={shareViaEmail} className="flex-1">
-              <Mail className="h-4 w-4 mr-2" />
-              Email
+            <Button size="sm" onClick={shareViaEmail} className="w-full px-2">
+              <Mail className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Email</span>
             </Button>
-            <Button size="sm" onClick={copyLink} variant="outline" className="flex-1">
-              <Copy className="h-4 w-4 mr-2" />
-              Copy
+            <Button size="sm" onClick={copyLink} variant="outline" className="w-full px-2">
+              <Copy className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Copy</span>
             </Button>
           </div>
           
@@ -356,7 +356,7 @@ export function SocialShare({
           )}
           
           <DialogClose asChild>
-            <Button variant="outline" size="sm" className="mt-2">
+            <Button variant="outline" size="sm" className="mt-2 w-full">
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>

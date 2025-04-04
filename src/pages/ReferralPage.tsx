@@ -5,11 +5,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Share2, Users, Gift, Award, ArrowRight, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { SocialShare } from "@/components/episodes/SocialShare";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function ReferralPage() {
   const { user } = useAuth();
   const { stats, referralLink, copyReferralLink } = useReferrals();
   const navigate = useNavigate();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  // Content for sharing
+  const appUrl = window.location.origin;
+  const shareTitle = "PodClass - AI Podcast Learning Assistant";
+  const shareDescription = "I've been using PodClass to learn from podcasts. Join me and get extra free trial episodes!";
 
   return (
     <div className="container py-8 max-w-5xl">
@@ -204,10 +220,32 @@ export default function ReferralPage() {
       {/* Call to action */}
       {user ? (
         <div className="mt-12 text-center">
-          <Button size="lg" onClick={() => navigate('/podcasts')}>
-            <Share2 className="h-5 w-5 mr-2" />
-            Start Sharing Now
-          </Button>
+          <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="lg">
+                <Share2 className="h-5 w-5 mr-2" />
+                Start Sharing Now
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Share PodClass</DialogTitle>
+                <DialogDescription>
+                  Share with friends and earn rewards when they join!
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="mt-4">
+                <SocialShare 
+                  episodeTitle={shareTitle}
+                  episodeUrl={appUrl}
+                  insights={shareDescription}
+                  referralBonus={true}
+                  onShareComplete={() => setShareDialogOpen(false)}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       ) : (
         <Card className="mt-12 bg-primary text-primary-foreground">

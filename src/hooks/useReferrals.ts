@@ -6,11 +6,12 @@ import { toast } from 'sonner';
 interface Referral {
   id: string;
   referred_user: {
-    email: string;
+    username: string;
   } | null;
   status: 'pending' | 'completed';
   created_at: string;
   completed_at: string | null;
+  referred_id: string;
 }
 
 interface ReferralStats {
@@ -52,23 +53,45 @@ export function useReferrals() {
           status,
           created_at,
           completed_at,
-          referred_user:referred_id (
-            email
-          )
+          referred_id
         `)
         .eq('referrer_id', user.id);
         
       if (error) throw error;
+
+      // Fetch user details for referred users
+      const referredIds = data?.map(r => r.referred_id) || [];
+      let userDetails: Record<string, { username: string }> = {};
+      
+      if (referredIds.length > 0) {
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', referredIds);
+          
+        if (!userError && userData) {
+          userDetails = Object.fromEntries(
+            userData.map(u => [u.id, { username: u.username || 'Unknown User' }])
+          );
+        }
+      }
+      
+      // Add user details to referrals
+      const enhancedReferrals: Referral[] = data?.map(referral => ({
+        ...referral,
+        referred_user: userDetails[referral.referred_id] || null,
+        status: referral.status as 'pending' | 'completed'
+      })) || [];
       
       // Set referrals data
-      setReferrals(data || []);
+      setReferrals(enhancedReferrals);
       
       // Calculate stats
-      const completed = data?.filter(r => r.status === 'completed') || [];
-      const pending = data?.filter(r => r.status === 'pending') || [];
+      const completed = enhancedReferrals.filter(r => r.status === 'completed') || [];
+      const pending = enhancedReferrals.filter(r => r.status === 'pending') || [];
       
       setStats({
-        totalReferrals: data?.length || 0,
+        totalReferrals: enhancedReferrals.length || 0,
         completedReferrals: completed.length,
         pendingReferrals: pending.length,
         creditsEarned: completed.length // Assuming 1 credit per completed referral

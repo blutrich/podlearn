@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -74,7 +73,7 @@ const Episodes = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container max-w-3xl mx-auto px-4 py-4">
+      <main className="container mx-auto px-4 py-4 w-full">
         <div className="mb-6">
           <Button
             variant="ghost"

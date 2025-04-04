@@ -11,8 +11,8 @@ import { toast } from "sonner";
 interface Referral {
   id: string;
   referred_user: {
-    email: string;
-  };
+    username: string;
+  } | null;
   status: 'pending' | 'completed';
   created_at: string;
   completed_at: string | null;
@@ -46,18 +46,40 @@ export function ReferralTracker() {
             status,
             created_at,
             completed_at,
-            referred_user:referred_id (
-              email
-            )
+            referred_id
           `)
           .eq('referrer_id', user.id);
           
         if (error) throw error;
         
-        setReferrals(data || []);
+        // Fetch user details for referred users
+        const referredIds = data?.map(r => r.referred_id) || [];
+        let userDetails: Record<string, { username: string }> = {};
+        
+        if (referredIds.length > 0) {
+          const { data: userData, error: userError } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('id', referredIds);
+            
+          if (!userError && userData) {
+            userDetails = Object.fromEntries(
+              userData.map(u => [u.id, { username: u.username || 'Anonymous User' }])
+            );
+          }
+        }
+        
+        // Add user details to referrals
+        const enhancedReferrals: Referral[] = data?.map(referral => ({
+          ...referral,
+          referred_user: userDetails[referral.referred_id] || null,
+          status: referral.status as 'pending' | 'completed'
+        })) || [];
+        
+        setReferrals(enhancedReferrals);
         
         // Count completed referrals for credits earned
-        const completed = data?.filter(r => r.status === 'completed') || [];
+        const completed = enhancedReferrals.filter(r => r.status === 'completed') || [];
         setCreditsEarned(completed.length);
         
       } catch (error) {
@@ -178,7 +200,7 @@ export function ReferralTracker() {
               {referrals.slice(0, 5).map((referral) => (
                 <div key={referral.id} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
                   <div className="text-sm truncate flex-1">
-                    {referral.referred_user?.email || 'Anonymous User'}
+                    {referral.referred_user?.username || 'Anonymous User'}
                   </div>
                   <Badge variant={referral.status === 'completed' ? 'default' : 'outline'}>
                     {referral.status === 'completed' ? 'Completed' : 'Pending'}

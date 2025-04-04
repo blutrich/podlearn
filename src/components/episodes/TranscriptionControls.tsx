@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, BookOpen, Play, Coins, Crown } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { LessonView } from "@/components/lessons/LessonView";
+import LessonView from "@/components/lessons/LessonView";
 import { useNavigate } from "react-router-dom";
 import { SocialShare } from "./SocialShare";
 
@@ -187,14 +187,26 @@ export const TranscriptionControls = ({
                   <BookOpen className="w-4 h-4 mr-2" />
                   {isLessonVisible ? "Hide Lesson" : "View Lesson"}
                 </Button>
-                <SocialShare 
-                  episodeTitle={episodeTitle}
-                  episodeUrl={window.location.href}
-                  insights={getInsights()}
-                  transcriptionPreview={getTranscriptionPreview()}
-                  referralBonus={shareCount < 3} // Enable referral bonus for first 3 shares
-                  onShareComplete={handleShareComplete}
-                />
+                <div className="inline-block md:hidden">
+                  <SocialShare 
+                    episodeTitle={episodeTitle}
+                    episodeUrl={window.location.href}
+                    insights={getInsights()}
+                    transcriptionPreview={getTranscriptionPreview()}
+                    referralBonus={shareCount < 3} // Enable referral bonus for first 3 shares
+                    onShareComplete={handleShareComplete}
+                  />
+                </div>
+                <div className="hidden md:inline-block">
+                  <SocialShare 
+                    episodeTitle={episodeTitle}
+                    episodeUrl={window.location.href}
+                    insights={getInsights()}
+                    transcriptionPreview={getTranscriptionPreview()}
+                    referralBonus={shareCount < 3} // Enable referral bonus for first 3 shares
+                    onShareComplete={handleShareComplete}
+                  />
+                </div>
               </>
             )}
             {isLoadingLesson && (
@@ -212,14 +224,14 @@ export const TranscriptionControls = ({
       </div>
 
       {isTranscriptionVisible && transcription && (
-        <div className="mt-4 p-4 bg-muted rounded-lg overflow-x-auto max-h-[600px] overflow-y-auto">
-          <pre className="whitespace-pre-wrap text-sm font-normal">{transcription}</pre>
+        <div className="mt-4 bg-muted rounded-lg overflow-x-auto max-h-[600px] overflow-y-auto w-full">
+          <pre className="whitespace-pre-wrap text-sm sm:text-base font-normal p-3 sm:p-4 pl-2 sm:pl-3 w-full">{transcription}</pre>
         </div>
       )}
 
       {isLessonVisible && lesson && (
-        <div className="mt-4">
-          <LessonView title={lesson.title} content={lesson.content} />
+        <div className="mt-4 w-full">
+          <LessonView episode={lesson.content} />
         </div>
       )}
       
