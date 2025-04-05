@@ -46,7 +46,6 @@ export default defineConfig(({ mode }) => ({
             'class-variance-authority',
             'tailwindcss',
           ],
-          'shadcn': ['@/components/ui'],
         },
         chunkFileNames: 'assets/[name]-[hash].js',
       },
