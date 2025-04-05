@@ -35,7 +35,7 @@ export function useReferrals() {
 
   // Generate referral link
   const referralLink = user 
-    ? `${window.location.origin}?ref=${user.id}`
+    ? `https://podclass.ai?ref=${user.id}`
     : '';
 
   // Load referrals data

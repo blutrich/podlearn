@@ -23,7 +23,7 @@ export default function ReferralPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // Content for sharing
-  const appUrl = window.location.origin;
+  const appUrl = "https://podclass.ai";
   const shareTitle = "PodClass - AI Podcast Learning Assistant";
   const shareDescription = "I've been using PodClass to learn from podcasts. Join me and get extra free trial episodes!";
 
