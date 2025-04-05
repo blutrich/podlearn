@@ -30,7 +30,6 @@ export default defineConfig(({ mode }) => ({
             '@tanstack/react-query',
             'sonner',
             'lucide-react',
-            '@vercel/analytics/react',
           ],
           'ui': [
             '@radix-ui/react-dialog',
@@ -52,9 +51,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
     chunkSizeWarningLimit: 600,
-  },
-  optimizeDeps: {
-    include: ['@vercel/analytics/react'],
   },
   envPrefix: [
     'VITE_',
