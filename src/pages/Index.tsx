@@ -65,7 +65,7 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <motion.span 
-                className="inline-block text-primary font-mono text-sm px-3 py-1 rounded-full bg-primary/10 mb-4"
+                className="inline-block text-primary font-semibold font-mono text-sm px-3 py-1 rounded-full bg-primary/20 mb-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -167,7 +167,7 @@ const Index = () => {
                 transition={{ delay: 0.2 * i }}
               >
                 <div className="bg-background rounded-xl p-6 h-full border border-border hover:border-primary/50 transition-all duration-300">
-                  <div className="mb-4 p-3 bg-primary/10 rounded-lg w-fit">
+                  <div className="mb-4 p-3 bg-primary/20 rounded-lg w-fit">
                     <step.icon className="w-6 h-6 text-primary" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
@@ -389,7 +389,7 @@ const Index = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-card rounded-lg p-6 border border-border flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Invite Friends</h3>
@@ -404,7 +404,7 @@ const Index = () => {
             </div>
             
             <div className="bg-card rounded-lg p-6 border border-border flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mb-4">
                 <Gift className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Earn Credits</h3>
@@ -412,14 +412,14 @@ const Index = () => {
                 Receive 1 free credit for each friend who signs up using your referral link.
               </p>
               <div className="mt-auto">
-                <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full">
+                <span className="text-sm font-semibold px-3 py-1 bg-primary/20 text-primary rounded-full">
                   1 Credit = 1 Episode
                 </span>
               </div>
             </div>
             
             <div className="bg-card rounded-lg p-6 border border-border flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mb-4">
                 <Award className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Bonus Rewards</h3>
