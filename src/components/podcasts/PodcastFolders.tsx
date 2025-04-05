@@ -611,7 +611,7 @@ export const PodcastFolders: React.FC<PodcastFoldersProps> = ({ podcast, showAdd
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="bg-background/100 backdrop-blur-lg border-border">
                       <DropdownMenuItem onClick={() => {
                         setSelectedFolder(folder);
                         setFolderName(folder.name);

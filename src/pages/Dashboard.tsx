@@ -89,7 +89,7 @@ export default function Dashboard() {
           {/* Referral CTA */}
           <Card className="bg-primary text-primary-foreground">
             <CardContent className="pt-6">
-              <h3 className="text-xl font-bold mb-2">Earn Free Credits</h3>
+              <h2 className="text-xl font-bold mb-2">Earn Free Credits</h2>
               <p className="text-primary-foreground/80 mb-4">
                 Invite friends to PodClass and earn free credits for each successful referral.
               </p>

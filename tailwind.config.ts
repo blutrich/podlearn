@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -26,7 +25,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#9b87f5",
+          DEFAULT: "#7B5CF0",
           foreground: "#ffffff",
         },
         secondary: {
@@ -48,6 +47,10 @@ export default {
         card: {
           DEFAULT: "#1A1F2C",
           foreground: "#ffffff",
+        },
+        purple: {
+          500: "#7B5CF0",
+          600: "#6A46E3",
         },
       },
       fontFamily: {

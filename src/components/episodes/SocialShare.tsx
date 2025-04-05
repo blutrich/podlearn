@@ -224,7 +224,7 @@ export function SocialShare({
             {referralBonus && <Badge variant="secondary" className="ml-1 text-xs">+1</Badge>}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56 bg-background/100 backdrop-blur-lg border-border">
           <DropdownMenuItem onClick={() => setShowPreview(true)} className="gap-2 cursor-pointer">
             <Share2 className="h-4 w-4" />
             Preview & Customize
