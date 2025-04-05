@@ -25,62 +25,99 @@ interface Podcast {
   is_saved?: boolean;
 }
 
-async function searchPodcasts(query: string) {
-  if (!query.trim()) return [];
-  
+async function searchPodcasts(searchTerm: string): Promise<Podcast[]> {
+  if (!searchTerm.trim()) {
+    return [];
+  }
+
   try {
-    // First try to search in our local database
-    const { data: localResults, error: localError } = await supabase
-      .from('podcasts')
-      .select('*')
-      .ilike('title', `%${query.trim()}%`)
-      .order('title');
-    
-    if (localError) throw localError;
-    
-    // If we have enough local results, return those
-    if (localResults && localResults.length > 5) {
-      return localResults.map(podcast => ({
-        ...podcast,
-        is_saved: false  // This will be updated later when checking saved podcasts
-      }));
-    }
-    
-    // Otherwise, also search external API
-    const { data, error } = await supabase.functions.invoke('search-podcasts', {
-      body: { query: query.trim() }
-    });
-    
-    if (error) throw error;
-    
-    // Format external results
-    const externalResults = data.podcasts.map((podcast: any) => ({
-      id: parseInt(podcast.id),
-      title: podcast.title || 'Untitled Podcast',
-      description: podcast.description,
-      author: podcast.author,
-      image_url: podcast.image_url,
-      feed_url: podcast.feed_url || '',
-      website_url: podcast.website_url,
-      language: podcast.language,
-      categories: podcast.categories,
-      is_saved: false
-    }));
-    
-    // Combine local and external results, removing duplicates by ID
-    const allResults = [...localResults];
-    externalResults.forEach((extPodcast: Podcast) => {
-      if (!allResults.some(local => local.id === extPodcast.id)) {
-        allResults.push(extPodcast);
+    const response = await fetch(
+      `${import.meta.env.VITE_FUNCTIONS_URL}/search-podcasts?q=${encodeURIComponent(searchTerm)}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
       }
-    });
-    
-    return allResults;
+    );
+
+    if (!response.ok) {
+      throw new Error(`Search failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.podcasts || [];
   } catch (error) {
-    console.error('Error searching podcasts:', error);
-    throw error;
+    console.error("Error searching podcasts:", error);
+    return [];
   }
 }
+
+interface PodcastCardProps {
+  podcast: Podcast;
+  handleEpisodesClick: (podcastId: number) => void;
+  handleSaveButtonClick: (podcast: Podcast) => Promise<void>;
+  handleDeletePodcast: (podcastId: number, podcastTitle: string) => Promise<void>;
+  isSaved?: boolean;
+}
+
+const PodcastCard: React.FC<PodcastCardProps> = ({ podcast, handleEpisodesClick, handleSaveButtonClick, handleDeletePodcast, isSaved = false }) => (
+  <Card key={podcast.id} className="podcast-card group">
+    <div className="aspect-square sm:aspect-video relative mb-2 rounded-md overflow-hidden">
+      <img
+        src={podcast.image_url || "/placeholder.svg"}
+        alt={podcast.title}
+        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+        onError={(e) => {
+          e.currentTarget.src = "/placeholder.svg";
+        }}
+      />
+    </div>
+    <div className="p-3 space-y-1">
+      <h3 className="font-semibold text-base line-clamp-1">{podcast.title}</h3>
+      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+        {podcast.description || "No description available"}
+      </p>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => handleEpisodesClick(podcast.id)}
+          className="h-8 px-2 py-1"
+        >
+          <Clock className="w-3 h-3 mr-1" />
+          Episodes
+        </Button>
+        
+        {isSaved ? (
+          <>
+            <PodcastFolders podcast={podcast} showAddButton={false} />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => handleDeletePodcast(podcast.id, podcast.title)}
+              className="h-8 px-2 py-1 text-destructive hover:text-destructive"
+            >
+              <Trash className="w-3 h-3 mr-1" />
+              Delete
+            </Button>
+          </>
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleSaveButtonClick(podcast)}
+            className="h-8 px-2 py-1"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Save
+          </Button>
+        )}
+      </div>
+    </div>
+  </Card>
+);
 
 const Browse = () => {
   const { toast } = useToast();
@@ -89,7 +126,7 @@ const Browse = () => {
   const [searchQuery, setSearchQuery] = React.useState(location.state?.preservedSearch || "");
   const [debouncedQuery, setDebouncedQuery] = React.useState(searchQuery);
   const [savedPodcasts, setSavedPodcasts] = React.useState<Podcast[]>([]);
-  const [activeTab, setActiveTab] = React.useState<string>("all"); // 'all' or 'folders'
+  const [activeTab, setActiveTab] = React.useState<string>("folders"); // Default to folders view
   
   // Load saved podcasts on component mount
   React.useEffect(() => {
@@ -183,37 +220,32 @@ const Browse = () => {
   };
 
   const handleDeletePodcast = async (podcastId: number, podcastTitle: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${podcastTitle}" from your saved podcasts?`)) {
-      return;
-    }
-    
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('saved_podcasts')
-        .delete()
-        .eq('podcast_id', podcastId)
-        .eq('user_id', user.id);
-
-      if (error) {
+      if (!user) {
         toast({
-          title: "Error",
-          description: `Failed to delete podcast: ${error.message}`,
+          title: "Authentication required",
+          description: "Please log in to manage your saved podcasts.",
           variant: "destructive",
         });
         return;
       }
 
-      // Update local state
-      setSavedPodcasts((prev) => prev.filter((p) => p.id !== podcastId));
-      
-      toast({
-        title: "Podcast Deleted",
-        description: `"${podcastTitle}" has been removed from your saved podcasts.`,
-      });
+      const { error } = await supabase
+        .from('saved_podcasts')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('podcast_id', podcastId);
 
+      if (error) throw error;
+
+      // Update local state
+      setSavedPodcasts(prev => prev.filter(podcast => podcast.id !== podcastId));
+
+      toast({
+        title: "Removed",
+        description: `"${podcastTitle}" removed from your saved podcasts.`,
+      });
     } catch (error) {
       console.error("Error deleting podcast:", error);
       toast({
@@ -229,20 +261,20 @@ const Browse = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
-          title: "Authentication Required",
-          description: "Please sign in to save podcasts.",
+          title: "Authentication required",
+          description: "Please log in to save podcasts.",
           variant: "destructive",
         });
         return;
       }
 
       if (podcast.is_saved) {
-        // Unsave podcast
+        // Unsave the podcast
         const { error } = await supabase
           .from('saved_podcasts')
           .delete()
-          .eq('podcast_id', podcast.id)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .eq('podcast_id', podcast.id);
 
         if (error) throw error;
 
@@ -326,9 +358,9 @@ const Browse = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 md:py-16">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">Browse Podcasts</h1>
+      <main className="container mx-auto px-3 py-4 md:px-4 md:py-8">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">Podcast Library</h1>
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
@@ -342,176 +374,83 @@ const Browse = () => {
         </div>
         
         {savedPodcasts.length > 0 && !debouncedQuery && (
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            className="mb-8"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <TabsList>
-                <TabsTrigger value="all" className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  All Saved
-                </TabsTrigger>
-                <TabsTrigger value="folders" className="flex items-center gap-1">
+          <div>
+            <Tabs 
+              value={activeTab} 
+              onValueChange={setActiveTab}
+              className="mb-4"
+            >
+              <TabsList className="w-full h-12 grid grid-cols-2 mb-6 sticky top-0 z-10 bg-background">
+                <TabsTrigger value="folders" className="flex items-center gap-1 h-full">
                   <FolderOpen className="h-4 w-4" />
-                  Folders
+                  <span className="hidden sm:inline">Folders</span>
+                </TabsTrigger>
+                <TabsTrigger value="all" className="flex items-center gap-1 h-full">
+                  <Clock className="h-4 w-4" />
+                  <span className="hidden sm:inline">All Saved</span>
                 </TabsTrigger>
               </TabsList>
-            </div>
-            
-            <TabsContent value="all">
-              <h2 className="text-xl font-semibold mb-4">Your Saved Podcasts</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {savedPodcasts.map((podcast) => (
-                  <Card key={podcast.id} className="podcast-card group">
-                    <div className="aspect-video relative mb-4 rounded-md overflow-hidden">
-                      <img
-                        src={podcast.image_url || "/placeholder.svg"}
-                        alt={podcast.title}
-                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder.svg";
-                        }}
-                      />
-                    </div>
-                    <div className="p-4 space-y-2">
-                      <h3 className="font-semibold text-base md:text-lg line-clamp-1">{podcast.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {podcast.description || "No description available"}
-                      </p>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                        <span className="text-sm text-primary">{podcast.author || "Unknown author"}</span>
-                        <div className="flex flex-wrap gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEpisodesClick(podcast.id)}
-                            className="w-full sm:w-auto"
-                          >
-                            <Clock className="w-4 h-4 mr-2" />
-                            View episodes
-                          </Button>
-                          <PodcastFolders podcast={podcast} showAddButton={false} />
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDeletePodcast(podcast.id, podcast.title)}
-                            className="w-full sm:w-auto text-destructive hover:text-destructive"
-                          >
-                            <Trash className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="folders">
-              <PodcastFolders />
-            </TabsContent>
-          </Tabs>
+              
+              <TabsContent value="folders" className="mt-0">
+                <PodcastFolders />
+              </TabsContent>
+              
+              <TabsContent value="all" className="mt-0">
+                <h2 className="text-xl font-semibold mb-4">Your Saved Podcasts</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                  {savedPodcasts.map((podcast) => (
+                    <PodcastCard 
+                      key={podcast.id}
+                      podcast={podcast}
+                      handleEpisodesClick={handleEpisodesClick}
+                      handleSaveButtonClick={handleSaveButtonClick}
+                      handleDeletePodcast={handleDeletePodcast}
+                      isSaved={true}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         )}
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="podcast-card animate-pulse">
-                <div className="aspect-video bg-muted"></div>
-                <div className="p-4 space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-full"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center text-destructive p-4">
-            Failed to load podcasts. Please try again later.
-          </div>
-        ) : searchResults?.length === 0 && debouncedQuery ? (
-          <div className="text-center text-muted-foreground p-4">
-            No podcasts found. Try a different search term.
-          </div>
-        ) : searchResults && searchResults.length > 0 ? (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Search Results</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {searchResults?.map((podcast: Podcast) => {
-                // Check if this podcast is already saved
-                const isSaved = savedPodcasts.some(saved => saved.feed_url === podcast.feed_url);
-                
-                return (
-                  <Card key={podcast.id} className="podcast-card group">
-                    <div className="aspect-video relative mb-4 rounded-md overflow-hidden">
-                      <img
-                        src={podcast.image_url || "/placeholder.svg"}
-                        alt={podcast.title}
-                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          // Replace broken images with placeholder
-                          e.currentTarget.src = "/placeholder.svg";
-                        }}
-                      />
-                    </div>
-                    <div className="p-4 space-y-2">
-                      <h3 className="font-semibold text-base md:text-lg line-clamp-1">{podcast.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {podcast.description || "No description available"}
-                      </p>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                        <span className="text-sm text-primary">{podcast.author || "Unknown author"}</span>
-                        <div className="flex flex-wrap gap-2">
-                          {isSaved ? (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="w-full sm:w-auto bg-muted/50"
-                              disabled
-                            >
-                              <Check className="w-4 h-4 mr-2 text-green-500" />
-                              Saved
-                            </Button>
-                          ) : (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleSaveButtonClick(podcast)}
-                              className="w-full sm:w-auto"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Save
-                            </Button>
-                          )}
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEpisodesClick(podcast.id)}
-                            className="w-full sm:w-auto"
-                          >
-                            <Clock className="w-4 h-4 mr-2" />
-                            View episodes
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
+        {debouncedQuery && (
+          isLoading ? (
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground">Searching for podcasts...</p>
             </div>
-          </div>
-        ) : (
-          <div className="py-8 text-center">
-            <p className="text-muted-foreground">Try searching for a different term or browse our featured podcasts.</p>
-          </div>
+          ) : error ? (
+            <div className="py-8 text-center">
+              <p className="text-destructive">Error loading results. Please try again.</p>
+            </div>
+          ) : searchResults && searchResults.length > 0 ? (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                {searchResults?.map((podcast: Podcast) => {
+                  const isSaved = savedPodcasts.some(saved => saved.id === podcast.id);
+                  return (
+                    <PodcastCard 
+                      key={podcast.id}
+                      podcast={podcast}
+                      handleEpisodesClick={handleEpisodesClick}
+                      handleSaveButtonClick={handleSaveButtonClick}
+                      handleDeletePodcast={handleDeletePodcast}
+                      isSaved={isSaved}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground">Try searching for a different term or browse our featured podcasts.</p>
+            </div>
+          )
         )}
         
         {!debouncedQuery && !isLoading && savedPodcasts.length === 0 && (
-          <div className="text-center p-12 bg-muted/30 rounded-lg">
+          <div className="text-center p-6 md:p-12 bg-muted/30 rounded-lg">
             <h2 className="text-xl font-semibold mb-2">No Saved Podcasts Yet</h2>
             <p className="text-muted-foreground mb-4">
               Search for podcasts above and save them to start building your collection.
