@@ -374,7 +374,6 @@ const Browse = () => {
             </div>
             
             <TabsContent value="folders" className="space-y-4">
-              <h2 className="text-xl font-semibold mb-4">Your Podcast Folders</h2>
               <PodcastFolders />
             </TabsContent>
             
