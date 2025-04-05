@@ -277,7 +277,7 @@ export default function LessonView({
               "overflow-hidden transition-all",
               expandedSection === "summary" ? "px-2 sm:px-3 py-3" : "h-0"
             )}>
-              <p className="text-sm sm:text-base leading-relaxed">{lesson.summary}</p>
+              <p className="text-sm sm:text-base leading-relaxed text-foreground font-normal">{lesson.summary}</p>
             </div>
           </div>
 
@@ -290,7 +290,7 @@ export default function LessonView({
             )}>
               <ul className="space-y-3">
                 {lesson.keyIdeas.map((idea, index) => (
-                  <li key={index} className="flex gap-2 text-sm sm:text-base">
+                  <li key={index} className="flex gap-2 text-sm sm:text-base text-foreground">
                     <span className="font-mono text-primary shrink-0">#{index + 1}</span>
                     <span>{idea}</span>
                   </li>
@@ -309,14 +309,14 @@ export default function LessonView({
               <div className="space-y-8">
                 {lesson.concepts.map((concept, index) => (
                   <div key={index} className="space-y-4">
-                    <h3 className="font-semibold text-lg break-words">{concept.name}</h3>
-                    <p className="text-sm break-words">{concept.explanation}</p>
+                    <h3 className="font-semibold text-lg break-words text-foreground">{concept.name}</h3>
+                    <p className="text-sm break-words text-foreground">{concept.explanation}</p>
                     
                     {concept.quotes.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Key Quotes:</h4>
+                        <h4 className="text-sm font-medium text-foreground">Key Quotes:</h4>
                         {concept.quotes.map((quote, i) => (
-                          <blockquote key={i} className="border-l-2 border-primary/50 pl-2 text-sm italic break-words">
+                          <blockquote key={i} className="border-l-2 border-primary/50 pl-2 text-sm italic break-words text-foreground">
                             "{quote}"
                           </blockquote>
                         ))}
@@ -325,10 +325,10 @@ export default function LessonView({
                     
                     {concept.applications.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium mb-2">Applications:</h4>
+                        <h4 className="text-sm font-medium mb-2 text-foreground">Applications:</h4>
                         <ul className="space-y-1">
                           {concept.applications.map((app, i) => (
-                            <li key={i} className="text-sm flex gap-2">
+                            <li key={i} className="text-sm flex gap-2 text-foreground">
                               <span className="text-primary">•</span>
                               {app}
                             </li>
@@ -339,10 +339,10 @@ export default function LessonView({
 
                     {concept.relatedConcepts.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium mb-2">Related Concepts:</h4>
+                        <h4 className="text-sm font-medium mb-2 text-foreground">Related Concepts:</h4>
                         <ul className="space-y-1">
                           {concept.relatedConcepts.map((rel, i) => (
-                            <li key={i} className="text-sm flex gap-2">
+                            <li key={i} className="text-sm flex gap-2 text-foreground">
                               <span className="text-primary">•</span>
                               {rel}
                             </li>
@@ -353,10 +353,10 @@ export default function LessonView({
 
                     {concept.misconceptions.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium mb-2">Common Misconceptions:</h4>
+                        <h4 className="text-sm font-medium mb-2 text-foreground">Common Misconceptions:</h4>
                         <ul className="space-y-1">
                           {concept.misconceptions.map((misc, i) => (
-                            <li key={i} className="text-sm flex gap-2">
+                            <li key={i} className="text-sm flex gap-2 text-foreground">
                               <span className="text-primary">•</span>
                               {misc}
                             </li>
@@ -380,13 +380,13 @@ export default function LessonView({
               <div className="space-y-6">
                 {lesson.supportingEvidence.map((evidence, index) => (
                   <div key={index} className="space-y-3">
-                    <p className="text-sm font-medium">{evidence.context}</p>
-                    <blockquote className="border-l-2 border-primary/50 pl-2 text-sm italic">
+                    <p className="text-sm font-medium text-foreground">{evidence.context}</p>
+                    <blockquote className="border-l-2 border-primary/50 pl-2 text-sm italic text-foreground">
                       "{evidence.quote}"
                     </blockquote>
                     <div className="space-y-2">
-                      <p className="text-sm"><span className="font-medium">Significance:</span> {evidence.significance}</p>
-                      <p className="text-sm"><span className="font-medium">Connections:</span> {evidence.connections}</p>
+                      <p className="text-sm text-foreground"><span className="font-medium">Significance:</span> {evidence.significance}</p>
+                      <p className="text-sm text-foreground"><span className="font-medium">Connections:</span> {evidence.connections}</p>
                     </div>
                   </div>
                 ))}
@@ -403,10 +403,10 @@ export default function LessonView({
             )}>
               {lesson.expertInsights.expertise.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2">Expert Background:</h4>
+                  <h4 className="text-sm font-medium mb-2 text-foreground">Expert Background:</h4>
                   <ul className="space-y-1">
                     {lesson.expertInsights.expertise.map((exp, i) => (
-                      <li key={i} className="text-sm flex gap-2">
+                      <li key={i} className="text-sm flex gap-2 text-foreground">
                         <span className="text-primary">•</span>
                         {exp}
                       </li>
@@ -417,10 +417,10 @@ export default function LessonView({
 
               {lesson.expertInsights.recommendations.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2">Key Recommendations:</h4>
+                  <h4 className="text-sm font-medium mb-2 text-foreground">Key Recommendations:</h4>
                   <ul className="space-y-1">
                     {lesson.expertInsights.recommendations.map((rec, i) => (
-                      <li key={i} className="text-sm flex gap-2">
+                      <li key={i} className="text-sm flex gap-2 text-foreground">
                         <span className="text-primary">•</span>
                         {rec}
                       </li>
@@ -431,10 +431,10 @@ export default function LessonView({
 
               {lesson.expertInsights.alternativeViews.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Alternative Viewpoints:</h4>
+                  <h4 className="text-sm font-medium mb-2 text-foreground">Alternative Viewpoints:</h4>
                   <ul className="space-y-1">
                     {lesson.expertInsights.alternativeViews.map((view, i) => (
-                      <li key={i} className="text-sm flex gap-2">
+                      <li key={i} className="text-sm flex gap-2 text-foreground">
                         <span className="text-primary">•</span>
                         {view}
                       </li>
@@ -455,17 +455,17 @@ export default function LessonView({
               <div className="space-y-6">
                 {lesson.actionSteps.map((step, index) => (
                   <div key={index} className="space-y-3">
-                    <p className="text-sm font-medium flex gap-2">
+                    <p className="text-sm font-medium flex gap-2 text-foreground">
                       <span className="font-mono text-primary">#{index + 1}</span>
                       {step.step}
                     </p>
                     
                     {step.prerequisites.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium mb-1">Prerequisites:</h4>
+                        <h4 className="text-sm font-medium mb-1 text-foreground">Prerequisites:</h4>
                         <ul className="space-y-1">
                           {step.prerequisites.map((prereq, i) => (
-                            <li key={i} className="text-sm flex gap-2">
+                            <li key={i} className="text-sm flex gap-2 text-foreground">
                               <span className="text-primary">•</span>
                               {prereq}
                             </li>
@@ -476,10 +476,10 @@ export default function LessonView({
 
                     {step.resources.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium mb-1">Helpful Resources:</h4>
+                        <h4 className="text-sm font-medium mb-1 text-foreground">Helpful Resources:</h4>
                         <ul className="space-y-1">
                           {step.resources.map((resource, i) => (
-                            <li key={i} className="text-sm flex gap-2">
+                            <li key={i} className="text-sm flex gap-2 text-foreground">
                               <span className="text-primary">•</span>
                               {resource}
                             </li>
@@ -502,10 +502,10 @@ export default function LessonView({
             )}>
               {lesson.additionalResources.references.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2">References:</h4>
+                  <h4 className="text-sm font-medium mb-2 text-foreground">References:</h4>
                   <ul className="space-y-1">
                     {lesson.additionalResources.references.map((ref, i) => (
-                      <li key={i} className="text-sm flex gap-2">
+                      <li key={i} className="text-sm flex gap-2 text-foreground">
                         <span className="text-primary">•</span>
                         {ref}
                       </li>
@@ -516,10 +516,10 @@ export default function LessonView({
 
               {lesson.additionalResources.tools.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2">Tools & Platforms:</h4>
+                  <h4 className="text-sm font-medium mb-2 text-foreground">Tools & Applications:</h4>
                   <ul className="space-y-1">
                     {lesson.additionalResources.tools.map((tool, i) => (
-                      <li key={i} className="text-sm flex gap-2">
+                      <li key={i} className="text-sm flex gap-2 text-foreground">
                         <span className="text-primary">•</span>
                         {tool}
                       </li>
@@ -530,10 +530,10 @@ export default function LessonView({
 
               {lesson.additionalResources.frameworks.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Frameworks & Methodologies:</h4>
+                  <h4 className="text-sm font-medium mb-2 text-foreground">Frameworks & Methodologies:</h4>
                   <ul className="space-y-1">
                     {lesson.additionalResources.frameworks.map((framework, i) => (
-                      <li key={i} className="text-sm flex gap-2">
+                      <li key={i} className="text-sm flex gap-2 text-foreground">
                         <span className="text-primary">•</span>
                         {framework}
                       </li>
