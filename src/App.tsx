@@ -5,9 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { AuthGuard } from "@/components/AuthGuard";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { Analytics } from "@vercel/analytics/react";
 
 // Lazy load all page components
 const Index = lazy(() => import("./pages/Index"));
@@ -20,6 +19,13 @@ const Pricing = lazy(() => import("./pages/Pricing"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const ReferralPage = lazy(() => import("./pages/ReferralPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+
+// Lazy load the Analytics component
+const AnalyticsComponent = lazy(() => 
+  import("@vercel/analytics/react").then(mod => ({
+    default: mod.Analytics
+  }))
+);
 
 const queryClient = new QueryClient();
 
@@ -59,7 +65,9 @@ const App = () => (
             </Routes>
           </Suspense>
         </BrowserRouter>
-        <Analytics />
+        <Suspense fallback={null}>
+          <AnalyticsComponent />
+        </Suspense>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
