@@ -249,16 +249,7 @@ export function useEpisodeAccess() {
       setCredits(prev => Math.max(0, prev - 1));
       
       // Verify credit was actually deducted by refreshing credits from database
-      const { data: updatedCreditData, error: refreshError } = await supabase
-        .from('user_credits')
-        .select('credits')
-        .eq('user_id', user.id)
-        .maybeSingle();
-        
-      if (!refreshError && updatedCreditData) {
-        // Make sure UI state matches database state
-        setCredits(updatedCreditData.credits);
-      }
+      await refreshCredits();
       
       return true;
     } catch (error) {
@@ -275,12 +266,36 @@ export function useEpisodeAccess() {
     }
   };
 
+  // Add a function to manually refresh credit count from database
+  const refreshCredits = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data: updatedCreditData, error: refreshError } = await supabase
+        .from('user_credits')
+        .select('credits')
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (!refreshError && updatedCreditData) {
+        // Make sure UI state matches database state
+        setCredits(updatedCreditData.credits);
+        return updatedCreditData.credits;
+      }
+    } catch (error) {
+      console.error('Error refreshing credits:', error);
+    }
+    
+    return null;
+  };
+
   return {
     loading,
     trialEpisodesUsed,
     hasActiveSubscription,
     credits,
     setCredits,
+    refreshCredits,
     checkEpisodeAccess,
     remainingTrialEpisodes: Math.max(0, 2 - trialEpisodesUsed)
   };

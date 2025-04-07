@@ -14,7 +14,7 @@ export const useTranscription = (episodeId: string) => {
   const { user } = useAuth();
   const [lesson, setLesson] = useState<{ title: string; content: string; } | null>(null);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
-  const { checkEpisodeAccess, remainingTrialEpisodes, hasActiveSubscription, credits, setCredits } = useEpisodeAccess();
+  const { checkEpisodeAccess, remainingTrialEpisodes, hasActiveSubscription, credits, setCredits, refreshCredits } = useEpisodeAccess();
   
   const { progress, setProgress, checkStatus } = useTranscriptionStatus(episodeId);
   const { handleCopyTranscription } = useTranscriptionCopy();
@@ -85,18 +85,7 @@ export const useTranscription = (episodeId: string) => {
     const hasAccess = await checkEpisodeAccess(episodeId);
     if (!hasAccess) {
       // Refresh credits data to ensure UI is up to date
-      if (user?.id) {
-        const { data: refreshedCreditData, error: refreshError } = await supabase
-          .from('user_credits')
-          .select('credits')
-          .eq('user_id', user.id)
-          .maybeSingle();
-          
-        if (!refreshError && refreshedCreditData) {
-          // Force update the credit display with the latest value
-          setCredits(refreshedCreditData.credits);
-        }
-      }
+      await refreshCredits();
         
       if (remainingTrialEpisodes > 0) {
         toast.error(`You have ${remainingTrialEpisodes} free trial episodes remaining`);
@@ -109,6 +98,9 @@ export const useTranscription = (episodeId: string) => {
     }
     
     await originalStartTranscription();
+    
+    // Refresh credits after successful transcription start
+    await refreshCredits();
   };
 
   const { isGeneratingLesson, handleGenerateLesson: handleGenerate } = useTranscriptionGenerate({
