@@ -87,7 +87,7 @@ serve(async (req) => {
       }
 
       // Limit transcript length to prevent memory issues
-      const maxLength = 24000; // Increased from 12000 to capture more content
+      const maxLength = 80000; // Increased from 24000 to capture more content with GPT-4o's larger context window
       const truncatedTranscript = transcription.length > maxLength 
         ? transcription.slice(0, maxLength) + "\n[Transcript truncated for length...]"
         : transcription;
@@ -192,7 +192,7 @@ Output your completed lesson within <educational_lesson> tags.`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo-16k", // Using 16k context model
+          model: "gpt-4o", // Using GPT-4o with 128k context window
           messages: [
             {
               role: "system",
@@ -204,7 +204,7 @@ Output your completed lesson within <educational_lesson> tags.`;
             }
           ],
           temperature: 0.2, // Reduced for more consistent and precise output
-          max_tokens: 4000 // Increased token limit for more comprehensive coverage
+          max_tokens: 8000 // Increased token limit for more comprehensive coverage
         })
       })
 

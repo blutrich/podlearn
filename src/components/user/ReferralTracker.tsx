@@ -27,7 +27,7 @@ export function ReferralTracker() {
   
   // Generate referral link
   const referralLink = user 
-    ? `https://podclass.ai?ref=${user.id}`
+    ? `${window.location.origin}?ref=${user.id}`
     : '';
   
   // Load referrals data

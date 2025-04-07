@@ -47,32 +47,11 @@ export function SocialShare({
 
   // Add referral code to URL if user is logged in
   const getShareUrl = () => {
-    if (!user) return ensureProductionDomain(episodeUrl);
+    if (!user) return episodeUrl;
     
-    try {
-      const url = new URL(ensureProductionDomain(episodeUrl));
-      url.searchParams.set("ref", user.id);
-      return url.toString();
-    } catch (error) {
-      console.error("Invalid URL:", error);
-      return episodeUrl;
-    }
-  };
-  
-  // Ensure URL uses production domain
-  const ensureProductionDomain = (url: string) => {
-    try {
-      const urlObj = new URL(url);
-      // If URL is already using production domain, return as is
-      if (urlObj.hostname === 'podclass.ai') return url;
-      
-      // Otherwise replace with production domain
-      urlObj.hostname = 'podclass.ai';
-      return urlObj.toString();
-    } catch (error) {
-      // If URL is invalid, return https://podclass.ai
-      return 'https://podclass.ai';
-    }
+    const url = new URL(episodeUrl);
+    url.searchParams.set("ref", user.id);
+    return url.toString();
   };
 
   const shareUrl = getShareUrl();
