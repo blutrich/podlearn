@@ -131,10 +131,10 @@ export const TranscriptionControls = ({
                     No credits remaining
                   </span>
                   <Button 
-                    variant="outline" 
+                    variant="default" 
                     size="sm"
                     onClick={() => navigate('/pricing')}
-                    className="ml-2"
+                    className="ml-2 bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     <Coins className="w-4 h-4 mr-2" />
                     Buy Credits
@@ -248,6 +248,25 @@ export const TranscriptionControls = ({
             )}
             {isGeneratingLesson && "Generating lesson..."}
           </p>
+        </div>
+      )}
+      
+      {!hasTranscription && !hasActiveSubscription && credits === 0 && !isStartingTranscription && (
+        <div className="mt-4 p-3 border border-dashed border-primary rounded-lg bg-primary/5 flex justify-between items-center">
+          <div>
+            <h4 className="font-medium flex items-center">
+              <Coins className="w-4 h-4 text-primary mr-2" />
+              Get More Episodes
+            </h4>
+            <p className="text-sm text-muted-foreground">Purchase credits or subscribe for unlimited access</p>
+          </div>
+          <Button 
+            onClick={() => navigate('/pricing')}
+            className="bg-primary hover:bg-primary/90"
+            size="sm"
+          >
+            Buy Credits
+          </Button>
         </div>
       )}
     </div>
