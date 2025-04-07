@@ -123,11 +123,11 @@ export const TranscriptionControls = ({
               ) : credits > 0 ? (
                 <span className="flex items-center">
                   <Coins className="w-4 h-4 mr-1 text-yellow-500" />
-                  {credits} credit{credits !== 1 ? 's' : ''} remaining
+                  <span className="font-semibold">{credits}</span> credit{credits !== 1 ? 's' : ''} remaining
                 </span>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-destructive">
+                  <span className="text-destructive font-semibold">
                     No credits remaining
                   </span>
                   <Button 

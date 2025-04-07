@@ -14,7 +14,7 @@ export const useTranscription = (episodeId: string) => {
   const { user } = useAuth();
   const [lesson, setLesson] = useState<{ title: string; content: string; } | null>(null);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
-  const { checkEpisodeAccess, remainingTrialEpisodes, hasActiveSubscription, credits } = useEpisodeAccess();
+  const { checkEpisodeAccess, remainingTrialEpisodes, hasActiveSubscription, credits, setCredits } = useEpisodeAccess();
   
   const { progress, setProgress, checkStatus } = useTranscriptionStatus(episodeId);
   const { handleCopyTranscription } = useTranscriptionCopy();
@@ -84,12 +84,26 @@ export const useTranscription = (episodeId: string) => {
     // Check access before starting transcription
     const hasAccess = await checkEpisodeAccess(episodeId);
     if (!hasAccess) {
+      // Refresh credits data to ensure UI is up to date
+      if (user?.id) {
+        const { data: refreshedCreditData, error: refreshError } = await supabase
+          .from('user_credits')
+          .select('credits')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (!refreshError && refreshedCreditData) {
+          // Force update the credit display with the latest value
+          setCredits(refreshedCreditData.credits);
+        }
+      }
+        
       if (remainingTrialEpisodes > 0) {
         toast.error(`You have ${remainingTrialEpisodes} free trial episodes remaining`);
       } else if (!hasActiveSubscription && credits === 0) {
-        toast.error('Please purchase credits or subscribe to process more episodes');
+        toast.error('You\'ve used all your credits. Please purchase more or subscribe for unlimited access.');
       } else {
-        toast.error('Unable to process this episode');
+        toast.error('Unable to process this episode. Please try again later.');
       }
       return;
     }

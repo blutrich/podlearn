@@ -235,7 +235,7 @@ export function useEpisodeAccess() {
     
     try {
       // Use a transaction to ensure both operations succeed or fail together
-      const { error } = await supabase.rpc('use_credit_and_record_usage', {
+      const { data, error } = await supabase.rpc('use_credit_and_record_usage', {
         p_user_id: user.id,
         p_episode_id: episodeId
       });
@@ -247,6 +247,20 @@ export function useEpisodeAccess() {
       
       // Update local state
       setCredits(prev => Math.max(0, prev - 1));
+      
+      // Verify credit was actually deducted by refreshing credits from database
+      const { data: updatedCreditData, error: refreshError } = await supabase
+        .from('user_credits')
+        .select('credits')
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (!refreshError && updatedCreditData) {
+        // Make sure UI state matches database state
+        setCredits(updatedCreditData.credits);
+      }
+      
+      return true;
     } catch (error) {
       console.error('Error using credit:', {
         error,
@@ -255,7 +269,9 @@ export function useEpisodeAccess() {
         timestamp: new Date().toISOString()
       });
       toast.error('Failed to process credit. Please try again later.');
-      throw error;
+      
+      // Return false to indicate failure so the UI can respond appropriately
+      return false;
     }
   };
 
@@ -264,6 +280,7 @@ export function useEpisodeAccess() {
     trialEpisodesUsed,
     hasActiveSubscription,
     credits,
+    setCredits,
     checkEpisodeAccess,
     remainingTrialEpisodes: Math.max(0, 2 - trialEpisodesUsed)
   };
