@@ -23,7 +23,7 @@ serve(async (req) => {
     console.log('Testing AssemblyAI connection');
     
     // Test connection to AssemblyAI
-    const response = await fetch('https://api.assemblyai.com/v2', {
+    const response = await fetch('https://api.eu.assemblyai.com/v2', {
       headers: {
         'Authorization': assemblyKey
       }

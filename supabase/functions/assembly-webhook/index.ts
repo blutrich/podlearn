@@ -112,7 +112,7 @@ serve(async (req) => {
     console.log(`Using ${endpoint} endpoint for ${episode.is_hebrew ? 'Hebrew' : 'non-Hebrew'} content`);
     
     try {
-      const segmentsResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcript_id}/${endpoint}`, {
+      const segmentsResponse = await fetch(`https://api.eu.assemblyai.com/v2/transcript/${transcript_id}/${endpoint}`, {
         headers: {
           'Authorization': assemblyKey
         }
@@ -129,7 +129,7 @@ serve(async (req) => {
         // Check if we need to fall back to the transcript endpoint
         if (segmentsResponse.status === 404 || segmentsResponse.status === 400) {
           console.log('Falling back to transcript endpoint');
-          const transcriptResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcript_id}`, {
+          const transcriptResponse = await fetch(`https://api.eu.assemblyai.com/v2/transcript/${transcript_id}`, {
             headers: {
               'Authorization': assemblyKey
             }

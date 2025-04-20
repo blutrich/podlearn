@@ -61,7 +61,7 @@ serve(async (req) => {
       console.log('Checking AssemblyAI status for transcript ID:', transcript_id);
       
       // Check AssemblyAI status manually
-      const response = await fetch(`https://api.assemblyai.com/v2/transcript/${transcript_id}`, {
+      const response = await fetch(`https://api.eu.assemblyai.com/v2/transcript/${transcript_id}`, {
         headers: {
           'Authorization': assemblyKey
         }

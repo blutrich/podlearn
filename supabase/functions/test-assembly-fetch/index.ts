@@ -29,7 +29,7 @@ serve(async (req) => {
 
     // Check AssemblyAI status
     console.log('Checking AssemblyAI transcript...');
-    const response = await fetch(`https://api.assemblyai.com/v2/transcript/${transcript_id}`, {
+    const response = await fetch(`https://api.eu.assemblyai.com/v2/transcript/${transcript_id}`, {
       headers: {
         'Authorization': assemblyKey
       }
@@ -52,7 +52,7 @@ serve(async (req) => {
     // Check for paragraphs endpoint
     let paragraphs = [];
     try {
-      const paragraphsResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcript_id}/paragraphs`, {
+      const paragraphsResponse = await fetch(`https://api.eu.assemblyai.com/v2/transcript/${transcript_id}/paragraphs`, {
         headers: {
           'Authorization': assemblyKey
         }
@@ -72,7 +72,7 @@ serve(async (req) => {
     // Check for utterances endpoint
     let utterances = [];
     try {
-      const utterancesResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcript_id}/utterances`, {
+      const utterancesResponse = await fetch(`https://api.eu.assemblyai.com/v2/transcript/${transcript_id}/utterances`, {
         headers: {
           'Authorization': assemblyKey
         }

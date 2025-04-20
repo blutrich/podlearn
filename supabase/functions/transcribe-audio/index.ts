@@ -138,7 +138,7 @@ serve(async (req) => {
     
     console.log('Sending request to AssemblyAI:', JSON.stringify(requestBody));
     try {
-      const transcriptionResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+      const transcriptionResponse = await fetch('https://api.eu.assemblyai.com/v2/transcript', {
         method: 'POST',
         headers: {
           'Authorization': assemblyKey,
