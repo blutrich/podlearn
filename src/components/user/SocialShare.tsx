@@ -54,58 +54,58 @@ export function SocialShare({
   };
   
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="space-y-3">
+      <div className="space-y-3">
         <Textarea 
           value={shareMessage}
           readOnly
-          className="resize-none h-24"
+          className="resize-none h-20 text-xs leading-relaxed overflow-hidden"
         />
-        <div className="flex justify-between">
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => openShareWindow('twitter')}
-              className="flex items-center gap-1"
+              className="text-xs px-2 py-1 h-8"
             >
-              <Twitter className="h-4 w-4" />
-              Twitter
+              <Twitter className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Twitter</span>
             </Button>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => openShareWindow('facebook')}
-              className="flex items-center gap-1"
+              className="text-xs px-2 py-1 h-8"
             >
-              <Facebook className="h-4 w-4" />
-              Facebook
+              <Facebook className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Facebook</span>
             </Button>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => openShareWindow('linkedin')}
-              className="flex items-center gap-1"
+              className="text-xs px-2 py-1 h-8"
             >
-              <Linkedin className="h-4 w-4" />
-              LinkedIn
+              <Linkedin className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">LinkedIn</span>
             </Button>
           </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleCopy}
-            className="flex items-center gap-1"
+            className="text-xs px-2 py-1 h-8 w-full"
           >
             {copied ? (
               <>
-                <Check className="h-4 w-4" />
-                Copied
+                <Check className="h-3 w-3 mr-1" />
+                Copied!
               </>
             ) : (
               <>
-                <Copy className="h-4 w-4" />
-                Copy
+                <Copy className="h-3 w-3 mr-1" />
+                Copy Link
               </>
             )}
           </Button>
@@ -113,9 +113,9 @@ export function SocialShare({
       </div>
       
       {includeReferralLink && (
-        <div className="bg-muted/50 p-3 rounded-md">
-          <p className="text-sm font-medium mb-2">Your referral link is included</p>
-          <p className="text-xs text-muted-foreground">
+        <div className="bg-muted/50 p-2 rounded-md">
+          <p className="text-xs font-medium mb-1">Your referral link is included</p>
+          <p className="text-[10px] text-muted-foreground leading-tight">
             When someone signs up using your link, you'll earn credits!
           </p>
         </div>

@@ -14,8 +14,8 @@ async function fetchEpisodesAndPodcast(podcastId: string) {
     console.log('Fetching episodes for podcast ID:', podcastId);
     
     const numericId = parseInt(podcastId);
-    if (isNaN(numericId)) {
-      throw new Error('Invalid podcast ID format');
+    if (isNaN(numericId) || numericId <= 0) {
+      throw new Error(`Invalid podcast ID format: ${podcastId}. Expected a positive number.`);
     }
     
     const { data, error } = await supabase.functions.invoke('search-podcasts', {
@@ -73,8 +73,8 @@ const Episodes = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-4 w-full">
-        <div className="mb-6">
+      <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 max-w-5xl">
+        <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -86,18 +86,22 @@ const Episodes = () => {
           </Button>
           
           {data?.podcast && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mt-4">
               {data.podcast.image_url && (
                 <img 
                   src={data.podcast.image_url} 
                   alt={data.podcast.title}
-                  className="w-32 h-32 rounded-lg object-cover"
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg object-cover flex-shrink-0"
                 />
               )}
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">{data.podcast.title}</h1>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight line-clamp-2">
+                  {data.podcast.title}
+                </h1>
                 {data.podcast.author && (
-                  <p className="text-sm text-muted-foreground mt-1">{data.podcast.author}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                    {data.podcast.author}
+                  </p>
                 )}
               </div>
             </div>
@@ -121,7 +125,7 @@ const Episodes = () => {
             No episodes found for this podcast.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 sm:space-y-4">
             {data.episodes.map((episode: Episode) => (
               <EpisodeCard
                 key={episode.id}

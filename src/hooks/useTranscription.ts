@@ -33,15 +33,16 @@ export const useTranscription = (episodeId: string) => {
         .from('episodes')
         .select('id')
         .eq('original_id', episodeId)
-        .single();
+        .maybeSingle();
 
       if (episodeError) {
-        console.error('Error fetching episode:', episodeError);
+        // Don't log errors for missing episodes - this is normal for unprocessed episodes
+        console.debug('Episode not found in database (this is normal for new episodes):', episodeId);
         return null;
       }
 
       if (!episode) {
-        console.error('Episode not found');
+        // Episode doesn't exist in our database yet - this is normal
         return null;
       }
 
@@ -129,7 +130,7 @@ export const useTranscription = (episodeId: string) => {
           .from('episodes')
           .select('transcription_status')
           .eq('original_id', episodeId)
-          .single();
+          .maybeSingle();
 
         if (episode?.transcription_status === 'completed') {
           await loadTranscription(episodeId);

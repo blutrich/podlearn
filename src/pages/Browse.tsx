@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Search, Plus, Check, Trash, FolderOpen, Folder } from "lucide-react";
+import { Clock, Search, Plus, Check, Trash, FolderOpen, Folder, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -94,6 +94,24 @@ const Browse = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<Podcast[]>([]);
   const [activeTab, setActiveTab] = React.useState<string>("folders"); // 'all' or 'folders'
+  
+  // Ensure user profile exists on component mount
+  React.useEffect(() => {
+    const ensureUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        // Call the function to ensure all user-related records exist
+        await supabase.rpc('ensure_user_profile', { user_id: user.id });
+      } catch (error) {
+        console.error("Error ensuring user profile:", error);
+        // Don't show a toast here as it's a background operation
+      }
+    };
+    
+    ensureUserProfile();
+  }, []);
   
   // Load saved podcasts on component mount
   React.useEffect(() => {
@@ -232,13 +250,43 @@ const Browse = () => {
   const handleSaveButtonClick = async (podcast: Podcast) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
+
       if (!user) {
         toast({
-          title: "Authentication Required",
+          title: "Sign in required",
           description: "Please sign in to save podcasts.",
           variant: "destructive",
         });
         return;
+      }
+
+      // First verify that a profile exists for this user
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        // If error is not "no rows returned", it's an unexpected error
+        console.error("Error checking profile:", profileError);
+        throw profileError;
+      }
+
+      // If profile doesn't exist, create one using our stored procedure
+      if (!profile) {
+        console.log("Profile doesn't exist, creating one...");
+        
+        // Call the create_missing_profile function which handles all related tables
+        const { data: newProfile, error: createError } = await supabase
+          .rpc('create_missing_profile', { user_id: user.id });
+        
+        if (createError) {
+          console.error("Error creating profile:", createError);
+          throw createError;
+        }
+        
+        console.log("Profile created successfully:", newProfile);
       }
 
       if (podcast.is_saved) {
@@ -266,7 +314,41 @@ const Browse = () => {
           description: `"${podcast.title}" removed from your saved podcasts.`,
         });
       } else {
-        // First ensure the podcast exists in the podcasts table
+        // First check if the podcast is already saved to prevent 409 conflict errors
+        const { data: existingSaved, error: checkSavedError } = await supabase
+          .from('saved_podcasts')
+          .select('id')
+          .eq('podcast_id', podcast.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (checkSavedError) throw checkSavedError;
+        
+        // If already saved, just update UI and return
+        if (existingSaved) {
+          // Update local state without making a duplicate DB entry
+          setSavedPodcasts(prev => {
+            if (!prev.some(p => p.id === podcast.id)) {
+              return [...prev, { ...podcast, is_saved: true }];
+            }
+            return prev;
+          });
+          
+          if (searchResultsData) {
+            const updatedResults = searchResultsData.map((p: Podcast) => 
+              p.id === podcast.id ? { ...p, is_saved: true } : p
+            );
+            setSearchResults(updatedResults);
+          }
+          
+          toast({
+            title: "Already Saved",
+            description: `"${podcast.title}" is already in your saved podcasts.`,
+          });
+          return;
+        }
+
+        // Ensure the podcast exists in the podcasts table
         const { data: existingPodcast, error: checkError } = await supabase
           .from('podcasts')
           .select('id')
@@ -337,15 +419,28 @@ const Browse = () => {
           Search for podcasts to learn from or view your saved collection.
         </p>
         
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search podcasts by title or author..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="relative flex-grow max-w-md">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search podcasts by title or author..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/transcriptions')}
+              className="flex items-center gap-1"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              View Learning Library
+            </Button>
+          </div>
         </div>
       </header>
 

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { TranscriptionStatus } from "@/types/transcription";
 
@@ -14,9 +13,10 @@ export const checkTranscriptionStatus = async (episodeId: string): Promise<Trans
 
     if (error) {
       console.error('Error checking transcription status:', error);
+      // Return pending status instead of failed for better UX
       return {
-        transcription_status: 'failed',
-        transcription_error: 'Failed to check transcription status',
+        transcription_status: 'pending',
+        transcription_error: null,
         transcription_started_at: null
       };
     }

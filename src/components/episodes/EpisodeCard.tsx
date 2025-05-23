@@ -47,71 +47,62 @@ export const EpisodeCard = ({
   } = useTranscription(episode.id);
 
   return (
-    <Card className="group hover:bg-accent/5 transition-colors w-full">
-      <div className="p-4 flex gap-4">
-        {episode.image_url && (
-          <div className="flex-shrink-0">
-            <img 
-              src={episode.image_url} 
-              alt={episode.title}
-              className="w-20 h-20 rounded-lg object-cover"
-            />
-          </div>
-        )}
-
-        <div className="flex-1 min-w-0 w-full">
-          <h3 className="text-lg font-semibold mb-1 truncate">{episode.title}</h3>
-          {episode.description && (
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-              {stripHtml(episode.description)}
-            </p>
+    <Card className="group hover:bg-accent/5 transition-colors w-full overflow-hidden">
+      <div className="p-3 sm:p-4">
+        {/* Header with image and basic info */}
+        <div className="flex gap-3 sm:gap-4 mb-4">
+          {episode.image_url && (
+            <div className="flex-shrink-0">
+              <img 
+                src={episode.image_url} 
+                alt={episode.title}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover"
+              />
+            </div>
           )}
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-            <Clock className="w-4 h-4" />
-            {formatDuration(duration)}
-          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg font-semibold mb-1 line-clamp-2 leading-tight">
+              {episode.title}
+            </h3>
+            {episode.description && (
+              <p className="text-sm text-muted-foreground mb-2 line-clamp-2 leading-relaxed">
+                {stripHtml(episode.description)}
+              </p>
+            )}
 
-          <div className="space-y-4 w-full">
-            <div className="flex flex-wrap gap-2 w-full">
-              <TranscriptionControls
-                isLoadingTranscription={isLoadingTranscription}
-                isStartingTranscription={isStartingTranscription}
-                isGeneratingLesson={isGeneratingLesson}
-                isLoadingLesson={isLoadingLesson}
-                transcription={transcription}
-                lesson={lesson || undefined}
-                progress={progress}
-                remainingTrialEpisodes={remainingTrialEpisodes}
-                hasActiveSubscription={hasActiveSubscription}
-                credits={credits}
-                onStartTranscription={handleStartTranscription}
-                onViewTranscription={handleViewTranscription}
-                onCopyTranscription={handleCopyTranscription}
-                onGenerateLesson={handleGenerateLesson}
-                episodeTitle={episode.title}
-              />
-              <Button 
-                variant="secondary"
-                size="sm"
-                className="flex-1 sm:flex-none"
-                onClick={onPlay}
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="w-4 h-4 mr-2" />
-                    Pause Episode
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Play Episode
-                  </>
-                )}
-              </Button>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="truncate">{formatDuration(duration)}</span>
             </div>
-            
-            {isPlaying && (
+          </div>
+        </div>
+
+        {/* Action buttons - more compact layout */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
+            <Button 
+              variant="secondary"
+              size="sm"
+              className="w-full sm:w-auto flex-shrink-0"
+              onClick={onPlay}
+            >
+              {isPlaying ? (
+                <>
+                  <Pause className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  <span className="truncate">Pause</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  <span className="truncate">Play Episode</span>
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {isPlaying && (
+            <div className="w-full">
               <PlaybackControls
                 currentTime={currentTime}
                 duration={duration}
@@ -119,8 +110,29 @@ export const EpisodeCard = ({
                 onSeek={onSeek}
                 onSpeedChange={onSpeedChange}
               />
-            )}
-          </div>
+            </div>
+          )}
+        </div>
+
+        {/* Transcription controls in a more compact format */}
+        <div className="mt-4 w-full">
+          <TranscriptionControls
+            isLoadingTranscription={isLoadingTranscription}
+            isStartingTranscription={isStartingTranscription}
+            isGeneratingLesson={isGeneratingLesson}
+            isLoadingLesson={isLoadingLesson}
+            transcription={transcription}
+            lesson={lesson || undefined}
+            progress={progress}
+            remainingTrialEpisodes={remainingTrialEpisodes}
+            hasActiveSubscription={hasActiveSubscription}
+            credits={credits}
+            onStartTranscription={handleStartTranscription}
+            onViewTranscription={handleViewTranscription}
+            onCopyTranscription={handleCopyTranscription}
+            onGenerateLesson={handleGenerateLesson}
+            episodeTitle={episode.title}
+          />
         </div>
       </div>
     </Card>

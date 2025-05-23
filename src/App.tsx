@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 const Index = lazy(() => import("./pages/Index"));
 const Browse = lazy(() => import("./pages/Browse"));
 const Episodes = lazy(() => import("./pages/Episodes"));
+const EpisodeView = lazy(() => import("./pages/EpisodeView"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestPayment = lazy(() => import("./pages/TestPayment"));
@@ -19,6 +20,8 @@ const Pricing = lazy(() => import("./pages/Pricing"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const ReferralPage = lazy(() => import("./pages/ReferralPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const TranscriptionHub = lazy(() => import("./pages/TranscriptionHub"));
+const Lesson = lazy(() => import("./pages/Lesson"));
 
 const queryClient = new QueryClient();
 
@@ -46,11 +49,14 @@ const App = () => (
               <Route element={<AuthGuard />}>
                 <Route path="/browse" element={<Browse />} />
                 <Route path="/episodes/:podcastId" element={<Episodes />} />
+                <Route path="/episode/:episodeId" element={<EpisodeView />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/test-payment" element={<TestPayment />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/referrals" element={<ReferralPage />} />
+                <Route path="/transcriptions" element={<TranscriptionHub />} />
+                <Route path="/lessons/:id" element={<Lesson />} />
               </Route>
 
               {/* Catch all */}

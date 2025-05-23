@@ -12,6 +12,7 @@ export function useEpisodeAccess() {
   const [trialEpisodesUsed, setTrialEpisodesUsed] = useState(0);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [credits, setCredits] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load user's access status
   useEffect(() => {
@@ -89,17 +90,70 @@ export function useEpisodeAccess() {
         const newEpisodeData: Episode = {
           original_id: originalEpisodeId.toString(),
           title: 'Episode ' + originalEpisodeId, // Temporary title
-          podcast_id: 0, // Temporary podcast_id
+          podcast_id: null, // Set to null instead of 0 to avoid foreign key constraint violation
           audio_url: null // Will be updated later
         };
 
         const { data: newEpisode, error: insertError } = await supabase
           .from('episodes')
-          .insert(newEpisodeData)
+          .upsert(newEpisodeData, { 
+            onConflict: 'original_id',
+            ignoreDuplicates: false 
+          })
           .select('id')
           .single();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          // If upsert failed, try to fetch the episode again in case it was created by another request
+          const { data: retryEpisodes, error: retryError } = await supabase
+            .from('episodes')
+            .select('id')
+            .eq('original_id', originalEpisodeId.toString());
+            
+          if (retryError || !retryEpisodes || retryEpisodes.length === 0) {
+            throw insertError; // Original error
+          }
+          
+          // Episode was found on retry
+          const episodeId = retryEpisodes[0].id;
+          
+          // Continue with the rest of the logic using the found episode
+          // Check if episode was already processed
+          const { data: existingUsage, error: usageError } = await supabase
+            .from('user_episode_usage')
+            .select('is_trial')
+            .eq('user_id', user.id)
+            .eq('episode_id', episodeId)
+            .maybeSingle();
+
+          if (usageError) throw usageError;
+
+          // If already processed, allow access
+          if (existingUsage) return true;
+
+          // If has active subscription, grant access
+          if (hasActiveSubscription) {
+            await recordEpisodeUsage(episodeId, false);
+            return true;
+          }
+
+          // Check if can use trial
+          if (trialEpisodesUsed < 2) {
+            await recordEpisodeUsage(episodeId, true);
+            setTrialEpisodesUsed(prev => prev + 1);
+            return true;
+          }
+
+          // Check if has credits
+          if (credits > 0) {
+            await useCredit(episodeId);
+            return true;
+          }
+
+          // No access available
+          return false;
+        }
+        
         if (!newEpisode) throw new Error('Failed to create episode');
         
         const episodeId = newEpisode.id;
@@ -215,7 +269,9 @@ export function useEpisodeAccess() {
 
       if (error) {
         console.error('Failed to record episode usage:', error);
-        throw error;
+        // Don't throw the error for episode usage recording failures
+        // This is a background operation and shouldn't block the main flow
+        return;
       }
     } catch (error) {
       console.error('Error recording episode usage:', {
@@ -230,39 +286,43 @@ export function useEpisodeAccess() {
     }
   };
 
-  const useCredit = async (episodeId: string) => {
-    if (!user?.id) return;
-    
+  const useCredit = async (episodeId: string): Promise<boolean> => {
     try {
-      // Use a transaction to ensure both operations succeed or fail together
+      setIsLoading(true);
+      
+      // Call the database function to use credit and record usage
       const { data, error } = await supabase.rpc('use_credit_and_record_usage', {
-        p_user_id: user.id,
+        p_user_id: user?.id,
         p_episode_id: episodeId
       });
-      
+
       if (error) {
-        console.error('Failed to use credit:', error);
-        throw error;
+        console.error('Error using credit:', error);
+        toast.error('Failed to process credit. Please try again.');
+        return false;
       }
-      
-      // Update local state
-      setCredits(prev => Math.max(0, prev - 1));
-      
-      // Verify credit was actually deducted by refreshing credits from database
+
+      // If the function returned false, it means not enough credits
+      if (!data) {
+        toast.error('Not enough credits available.');
+        return false;
+      }
+
+      // Immediately update local credit count
+      if (credits > 0) {
+        setCredits(credits - 1);
+      }
+
+      // Refresh credits from database to ensure accuracy
       await refreshCredits();
       
       return true;
     } catch (error) {
-      console.error('Error using credit:', {
-        error,
-        userId: user.id,
-        episodeId,
-        timestamp: new Date().toISOString()
-      });
-      toast.error('Failed to process credit. Please try again later.');
-      
-      // Return false to indicate failure so the UI can respond appropriately
+      console.error('Error in useCredit:', error);
+      toast.error('Failed to process credit. Please try again.');
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 

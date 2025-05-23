@@ -1,5 +1,5 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -27,6 +27,38 @@
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
     --radius: 0.75rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -53,4 +85,52 @@
   .text-gradient {
     @apply bg-gradient-to-br from-white via-white/90 to-white/70 bg-clip-text text-transparent;
   }
+}
+
+/* Hebrew font support */
+.font-hebrew {
+  font-family: 'Heebo', 'Arial Hebrew', 'Tahoma', sans-serif;
+  line-height: 1.6;
+}
+
+/* RTL support */
+.rtl {
+  direction: rtl;
+}
+
+.prose-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.prose-rtl h1,
+.prose-rtl h2,
+.prose-rtl h3,
+.prose-rtl h4,
+.prose-rtl h5,
+.prose-rtl h6 {
+  text-align: right;
+}
+
+.prose-rtl ul,
+.prose-rtl ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+.prose-rtl blockquote {
+  border-right: 4px solid #e5e7eb;
+  border-left: none;
+  padding-right: 1rem;
+  padding-left: 0;
+}
+
+/* Hebrew text improvements */
+.font-hebrew * {
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* Better Hebrew quote styling */
+.not-italic {
+  font-style: normal !important;
 }
